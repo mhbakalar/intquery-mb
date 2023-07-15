@@ -1,7 +1,9 @@
 import pandas as pd
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torch.utils.data
 
 translation_dict = {"A":0,"C":1,"T":2,"G":3}
 reverse_translation_dict = {0:"A",1:"C",2:"T",3:"G"}
@@ -47,20 +49,32 @@ if __name__ == "__main__":
   # Concatenate hits and decoys
   sequences = np.hstack([hits, decoys])
   labels = np.hstack([hits_labels, decoys_labels])
-
   dataset = Dataset(sequences, labels)
-  dataloader = torch.utils.data.DataLoader(dataset, batch_size=3, shuffle=True)
+
+   # Test and train
+  train_size = int(0.8*len(dataset))
+  test_size = len(dataset) - train_size
+  train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, test_size])
+  
+  train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=32)
+  val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=32)
 
   model = MLP(input_size=46*4, hidden_size=128, output_size=1)
   loss_fn = torch.nn.BCEWithLogitsLoss()
   optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-  for epoch in range(10):
-    for i, (data, target) in enumerate(dataloader):
+  for epoch in range(100):
+    for i, (data, target) in enumerate(train_dataloader):
       output = model(data).flatten()
       loss = loss_fn(output.flatten(), target.float())
       optimizer.zero_grad()
       loss.backward()
       optimizer.step()
+    print("Train loss: ", loss)
 
-    print(loss)
+    with torch.no_grad():
+      loss = 0
+      for i, (data, target) in enumerate(val_dataloader):
+        output = model(data).flatten()
+        loss += loss_fn(output.flatten(), target.float())
+      print("Val loss: ", loss/len(val_dataloader))
