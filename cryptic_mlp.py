@@ -51,7 +51,7 @@ if __name__ == "__main__":
   labels = np.hstack([hits_labels, decoys_labels])
   dataset = Dataset(sequences, labels)
 
-   # Test and train
+   # Test and train data split
   train_size = int(0.8*len(dataset))
   test_size = len(dataset) - train_size
   train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, test_size])
@@ -59,11 +59,13 @@ if __name__ == "__main__":
   train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=32)
   val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=32)
 
+  # Build model
   model = MLP(input_size=46*4, hidden_size=128, output_size=1)
   loss_fn = torch.nn.BCEWithLogitsLoss()
   optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-  for epoch in range(100):
+  # Training loop
+  for epoch in range(10):
     for i, (data, target) in enumerate(train_dataloader):
       output = model(data).flatten()
       loss = loss_fn(output.flatten(), target.float())
@@ -72,6 +74,7 @@ if __name__ == "__main__":
       optimizer.step()
     print("Train loss: ", loss)
 
+    # Compute validation loss each epoch
     with torch.no_grad():
       loss = 0
       for i, (data, target) in enumerate(val_dataloader):
