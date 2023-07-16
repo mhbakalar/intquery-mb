@@ -50,7 +50,8 @@ class DinucleotideDataset(torch.utils.data.IterableDataset):
                             end = span[1] + window
                             sequence = long_line[start + len(lines[0]):end + len(lines[0])]
                             coords = (idx + start - 100, idx + end - 100)
-                            yield (chr, coords[0], coords[1], sequence, self.one_hot(sequence))
+                            if len(sequence) == self.length:
+                                yield (chr, coords[0], coords[1], sequence, self.one_hot(sequence))
 
 if __name__ == "__main__":
     dataset = DinucleotideDataset('../hg38.fa',"CT")
