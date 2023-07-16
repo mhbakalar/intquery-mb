@@ -5,8 +5,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.data
 
-translation_dict = {"A":0,"C":1,"T":2,"G":3}
-reverse_translation_dict = {0:"A",1:"C",2:"T",3:"G"}
+import genome_data
+
+translation_dict = {"A":0,"C":1,"T":2,"G":3,"N":4}
+reverse_translation_dict = {0:"A",1:"C",2:"T",3:"G",4:"N"}
 
 class MLP(nn.Module):
   def __init__(self, input_size, hidden_size, output_size):
@@ -85,3 +87,17 @@ if __name__ == "__main__":
         output = model(data).flatten()
         loss += loss_fn(output.flatten(), target.float())
       print("Val loss: ", loss/len(val_dataloader))
+
+# Evaluate on genomic data
+genome_dataset = genome_data.DinucleotideDataset('../hg38.fa',"GC")
+genome_dataloader = torch.utils.data.DataLoader(genome_dataset, batch_size=1)
+
+with torch.no_grad():
+  for i, (chr, start, end, sequence, data) in enumerate(genome_dataloader):
+    try:
+      output = model(data).flatten()
+      logits = torch.sigmoid(output)
+      if logits > 0.95:
+        print(sequence[0].upper())
+    except:
+      pass  # todo: handle sequences with N values
