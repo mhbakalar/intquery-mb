@@ -70,8 +70,9 @@ if __name__ == "__main__":
   hits_labels = np.ones(len(hits))
 
   # Generate random decoy sequences
-  decoys = np.random.randint(0,4,[len(hits),46])
-  decoys[:,22:24] = dinucleotide_ids  # Set core dinucleotide for each decoy 
+  decoys = np.random.randint(0,4,[len(hits),seq_length])  # Don't use N in decoys
+  dn_start = int(seq_length/2 - 1)
+  decoys[:,dn_start:dn_start+2] = dinucleotide_ids  # Set core dinucleotide for each decoy 
 
   if fixed_bases != None: 
     fixed_base_dict = {}
