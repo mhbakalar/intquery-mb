@@ -5,6 +5,7 @@ class DinucleotideDataset(torch.utils.data.IterableDataset):
 
     def __init__(self, data_file, dinucleotide):
         self.data_file = data_file
+        self.dinucleotide = dinucleotide
 
     def __iter__(self):
         with open(self.data_file, "r") as f:
@@ -28,7 +29,7 @@ class DinucleotideDataset(torch.utils.data.IterableDataset):
                         lines.pop(0)
 
                         # Search for GC dinucleotide in [50,100]
-                        pattern = re.compile(r"(GC)")
+                        pattern = re.compile(r"({})".format(self.dinucleotide))
                         for m in pattern.finditer(lines[1].upper()):
                             # Concatenate last three lines
                             long_line = "".join(lines)
@@ -42,9 +43,7 @@ class DinucleotideDataset(torch.utils.data.IterableDataset):
                             yield (chr, coords[0], coords[1], sequence)
 
 if __name__ == "__main__":
-    dataset = DinucleotideDataset('hg38.fa')
+    dataset = DinucleotideDataset('../hg38.fa',"CT")
     # Print first 10 sequences
     for i, item in enumerate(dataset):
         print(item)
-        if i > 10:
-            break
