@@ -89,15 +89,17 @@ if __name__ == "__main__":
       print("Val loss: ", loss/len(val_dataloader))
 
 # Evaluate on genomic data
-genome_dataset = genome_data.DinucleotideDataset('../hg38.fa',"GC")
+genome_dataset = genome_data.DinucleotideDataset('../hg38.fa', dinucleotide="GC", length=46)
 genome_dataloader = torch.utils.data.DataLoader(genome_dataset, batch_size=1)
 
 with torch.no_grad():
+  count = 0
   for i, (chr, start, end, sequence, data) in enumerate(genome_dataloader):
     try:
       output = model(data).flatten()
       logits = torch.sigmoid(output)
-      if logits > 0.95:
-        print(sequence[0].upper())
+      if logits > 0.99:
+        count += 1
+        print(chr[0], start[0].item(), end[0].item(), sequence[0].upper())
     except:
       pass  # todo: handle sequences with N values

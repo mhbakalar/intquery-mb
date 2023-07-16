@@ -6,14 +6,15 @@ class DinucleotideDataset(torch.utils.data.IterableDataset):
     
     translation_dict = {"A":0,"C":1,"T":2,"G":3,"N":4}
 
+    def __init__(self, data_file, dinucleotide, length):
+        self.data_file = data_file
+        self.dinucleotide = dinucleotide
+        self.length = length
+
     def one_hot(self, sequence):
         encoding = torch.tensor([self.translation_dict[c] for c in sequence.upper()])
         x = F.one_hot(encoding).to(torch.float32)
         return x
-
-    def __init__(self, data_file, dinucleotide):
-        self.data_file = data_file
-        self.dinucleotide = dinucleotide
 
     def __iter__(self):
         with open(self.data_file, "r") as f:
@@ -44,8 +45,9 @@ class DinucleotideDataset(torch.utils.data.IterableDataset):
                             span = m.span()
 
                             # Find the 50 bp region surrounding dinucleotide
-                            start = span[0] - 22
-                            end = span[1] + 22
+                            window = int((self.length-2)/2)
+                            start = span[0] - window
+                            end = span[1] + window
                             sequence = long_line[start + len(lines[0]):end + len(lines[0])]
                             coords = (idx + start - 100, idx + end - 100)
                             yield (chr, coords[0], coords[1], sequence, self.one_hot(sequence))
