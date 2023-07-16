@@ -44,7 +44,7 @@ class Dataset(torch.utils.data.Dataset):
 
 if __name__ == "__main__":
 
-  parser = argparse.ArgumentParser(description='MLP for Genome Data Classification')
+  parser = argparse.ArgumentParser(description='MLP for Cryptic Site Classification')
   parser.add_argument('--reference', default='/data/references/hg38.fa', type=str, help='Path to the reference genome')
   parser.add_argument('--dinucleotide', default='GC', type=str, help='Dinucleotide to use')
   parser.add_argument('--sequence_length', default=46, type=int, help='Length of the sequence')
