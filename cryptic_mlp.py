@@ -14,15 +14,17 @@ translation_dict = {"A":0,"C":1,"T":2,"G":3,"N":4}
 reverse_translation_dict = {0:"A",1:"C",2:"T",3:"G",4:"N"}
 
 class MLP(nn.Module):
-  def __init__(self, input_size, hidden_size, output_size):
+  def __init__(self, input_size, hidden_size, output_size, dropout=0.5):
     super().__init__()
     self.flatten = nn.Flatten()
+    self.dropout = nn.Dropout(dropout)
     self.fc1 = nn.Linear(input_size, hidden_size)
     self.fc2 = nn.Linear(hidden_size, output_size)
 
   def forward(self, x):
     x = self.flatten(x)
     x = F.relu(self.fc1(x))
+    x = self.dropout(x)
     x = self.fc2(x)
     return x
 
