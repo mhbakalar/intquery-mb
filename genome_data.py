@@ -13,7 +13,7 @@ class DinucleotideDataset(torch.utils.data.IterableDataset):
 
     def one_hot(self, sequence):
         encoding = torch.tensor([self.translation_dict[c] for c in sequence.upper()])
-        x = F.one_hot(encoding).to(torch.float32)
+        x = F.one_hot(encoding, num_classes=len(self.translation_dict)).to(torch.float32)
         return x
 
     def __iter__(self):

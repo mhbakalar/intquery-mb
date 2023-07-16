@@ -24,9 +24,10 @@ class MLP(nn.Module):
     return x
 
 class Dataset(torch.utils.data.Dataset):
-  def __init__(self, sequences, labels):
+  def __init__(self, sequences, labels, vocab_size):
     self.sequences = sequences
     self.labels = labels
+    self.vocab_size = vocab_size
 
   def __len__(self):
     return len(self.sequences)
@@ -35,7 +36,7 @@ class Dataset(torch.utils.data.Dataset):
     sequence = self.sequences[idx]
     label = self.labels[idx]
     encoding = torch.tensor([translation_dict[c] for c in sequence])
-    x = F.one_hot(encoding).to(torch.float32)
+    x = F.one_hot(encoding, num_classes=self.vocab_size).to(torch.float32)
     return x, label
 
 if __name__ == "__main__":
@@ -49,9 +50,11 @@ if __name__ == "__main__":
   decoys_labels = np.zeros(len(decoys))
 
   # Concatenate hits and decoys
+  vocab_size = 5
+
   sequences = np.hstack([hits, decoys])
   labels = np.hstack([hits_labels, decoys_labels])
-  dataset = Dataset(sequences, labels)
+  dataset = Dataset(sequences, labels, vocab_size=vocab_size)
 
    # Test and train data split
   train_size = int(0.8*len(dataset))
@@ -63,7 +66,6 @@ if __name__ == "__main__":
 
   # Build model
   seq_length = 46
-  vocab_size = 4
   hidden_size = 128
 
   model = MLP(input_size=seq_length*vocab_size, hidden_size=hidden_size, output_size=1)
@@ -90,16 +92,14 @@ if __name__ == "__main__":
 
 # Evaluate on genomic data
 genome_dataset = genome_data.DinucleotideDataset('../hg38.fa', dinucleotide="GC", length=46)
-genome_dataloader = torch.utils.data.DataLoader(genome_dataset, batch_size=1)
+genome_dataloader = torch.utils.data.DataLoader(genome_dataset, batch_size=32)
 
 with torch.no_grad():
   count = 0
   for i, (chr, start, end, sequence, data) in enumerate(genome_dataloader):
-    try:
-      output = model(data).flatten()
-      logits = torch.sigmoid(output)
-      if logits > 0.99:
-        count += 1
-        print(chr[0], start[0].item(), end[0].item(), sequence[0].upper())
-    except:
-      pass  # todo: handle sequences with N values
+    output = model(data).flatten()
+    logits = torch.sigmoid(output)
+    locs = (logits > 0.99).nonzero()
+    if len(locs) > 0:
+      for l in locs:
+        print(chr[l], start[l].item(), end[l].item(), sequence[l].upper())
