@@ -60,7 +60,11 @@ if __name__ == "__main__":
   val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=32)
 
   # Build model
-  model = MLP(input_size=46*4, hidden_size=128, output_size=1)
+  seq_length = 46
+  vocab_size = 4
+  hidden_size = 128
+
+  model = MLP(input_size=seq_length*vocab_size, hidden_size=hidden_size, output_size=1)
   loss_fn = torch.nn.BCEWithLogitsLoss()
   optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
