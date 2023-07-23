@@ -12,20 +12,31 @@ class DinucleotideDataset(torch.utils.data.IterableDataset):
         self.dinucleotide = dinucleotide
         self.length = length
 
+    '''
+    Convert DNA sequence to one-hot encoding using translation_dict
+    '''
     def one_hot(self, sequence):
         encoding = torch.tensor([self.translation_dict[c] for c in sequence.upper()])
         x = F.one_hot(encoding, num_classes=len(self.translation_dict)).to(torch.float32)
         return x
 
+    '''
+    Iterator yields ```length``` base pair sequences centered around dinucleotide.
+    '''
     def __iter__(self):
+        # Iterate across chromosomes in genome
         for chr in self.genome.keys():
-            genomic_sequence = self.genome[chr].upper()
-            pattern = re.compile(r"({})".format(self.dinucleotide))
+            genomic_sequence = self.genome[chr].upper() # DNA sequence for current chromosome
+            pattern = re.compile(r"({})".format(self.dinucleotide)) # Scan for dinucloetide
+
+            # Extract sequence window centered around the dinucleotide
             for m in pattern.finditer(genomic_sequence):
                 window = int((self.length-2)/2)
                 start = m.span()[0] - window
                 end = m.span()[1] + window
                 sequence = genomic_sequence[start:end]
+
+                # Yield the sequence if it is full length
                 if len(sequence) == self.length:
                     yield(chr, start, end, sequence, self.one_hot(sequence))
 
