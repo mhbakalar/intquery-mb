@@ -1,5 +1,6 @@
 import torch
 import re
+import genomepy.seq
 import torch.nn.functional as F
 
 class DinucleotideDataset(torch.utils.data.IterableDataset):
@@ -7,7 +8,7 @@ class DinucleotideDataset(torch.utils.data.IterableDataset):
     translation_dict = {"A":0,"C":1,"T":2,"G":3,"N":4}
 
     def __init__(self, data_file, dinucleotide, length):
-        self.data_file = data_file
+        self.genome = genomepy.seq.as_seqdict(data_file)
         self.dinucleotide = dinucleotide
         self.length = length
 
@@ -17,44 +18,19 @@ class DinucleotideDataset(torch.utils.data.IterableDataset):
         return x
 
     def __iter__(self):
-        with open(self.data_file, "r") as f:
-            lines = []
-            chr = ""
-            for line in f:
-                line = line.strip()
-
-                # Check for fasta header line
-                match = re.search(r">(.*)", line)
-                if match:
-                    chr = match.group(1)
-                    idx = 0
-                else:
-                    lines.append(line)
-                    idx += len(line)
-
-                    if len(lines) > 3:
-                        # Assemble 150 bp sequence
-                        long_line = "".join(lines)
-                        lines.pop(0)
-
-                        # Search for GC dinucleotide in [50,100]
-                        pattern = re.compile(r"({})".format(self.dinucleotide))
-                        for m in pattern.finditer(lines[1].upper()):
-                            # Concatenate last three lines
-                            long_line = "".join(lines)
-                            span = m.span()
-
-                            # Find the 50 bp region surrounding dinucleotide
-                            window = int((self.length-2)/2)
-                            start = span[0] - window
-                            end = span[1] + window
-                            sequence = long_line[start + len(lines[0]):end + len(lines[0])]
-                            coords = (idx + start - 100, idx + end - 100)
-                            if len(sequence) == self.length:
-                                yield (chr, coords[0], coords[1], sequence, self.one_hot(sequence))
+        for chr in self.genome.keys():
+            genomic_sequence = self.genome[chr].upper()
+            pattern = re.compile(r"({})".format(self.dinucleotide))
+            for m in pattern.finditer(genomic_sequence):
+                window = int((self.length-2)/2)
+                start = m.span()[0] - window
+                end = m.span()[1] + window
+                sequence = genomic_sequence[start:end]
+                if len(sequence) == self.length:
+                    yield(chr, start, end, sequence, self.one_hot(sequence))
 
 if __name__ == "__main__":
-    dataset = DinucleotideDataset('../hg38.fa',"CT")
+    dataset = DinucleotideDataset('../data/reference/hg38.fa','GT', length=50)
     # Print first 10 sequences
     for i, item in enumerate(dataset):
-        print(item)
+        print(item[0],item[3])
