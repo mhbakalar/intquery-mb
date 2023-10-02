@@ -1,6 +1,7 @@
 import torch
 import re
 import genomepy.seq
+import genomepy.genome
 import torch.nn.functional as F
 
 class DinucleotideDataset(torch.utils.data.IterableDataset):
@@ -39,6 +40,13 @@ class DinucleotideDataset(torch.utils.data.IterableDataset):
                 # Yield the sequence if it is full length
                 if len(sequence) == self.length:
                     yield(chr, start, end, sequence, self.one_hot(sequence))
+
+    def generate_decoys(self, count):
+        sequences = self.genome.get_random_sequences(count, self.length, max_n=0)
+        start = int(self.length/2 - 1)
+        sequences = [seq[:start] + self.dinucleotide + seq[start+2:] for seq in sequences]
+        return sequences
+
 
 if __name__ == "__main__":
     dataset = DinucleotideDataset('../data/reference/hg38.fa','GT', length=50)
