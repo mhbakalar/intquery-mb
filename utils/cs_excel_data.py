@@ -13,7 +13,7 @@ def extract_excel_cs_data(input_file, sheet_names, output_dir, output_name, dn_e
     sites = sites[sites['genome_dinucleotide'] == sites['donor'].str.slice(5,7)]
 
     # Exclude dinucleotides if necessary
-    sites = sites[~sites['genome_dinucleotide'].isin(dn_exclusion)]
+    sites = sites[sites['genome_dinucleotide'].isin(dn_exclusion)]
 
     # Sum count at identical sites
     sites = sites.groupby(['seq'], as_index=False).sum(numeric_only=False)
@@ -39,3 +39,5 @@ def extract_excel_cs_data(input_file, sheet_names, output_dir, output_name, dn_e
 
     # Save to file
     output_data.to_csv(os.path.join(output_dir, output_name), index=False)
+
+    return sites
