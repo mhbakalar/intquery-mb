@@ -12,15 +12,15 @@ def extract_excel_cs_data(input_file, sheet_names, output_dir, output_name, dn_e
     # Only take canonical dinucleotide insertions
     sites = sites[sites['genome_dinucleotide'] == sites['donor'].str.slice(5,7)]
 
-    # Exclude dinucleotides if necessary
-    sites = sites[~sites['genome_dinucleotide'].isin(dn_exclusion)]
-
     # Sum count at identical sites
     sites = sites.groupby(['seq'], as_index=False).sum(numeric_only=False)
 
     # Noramlize by on target count
     UMI_norm_factor = sites[sites['chrom'].str.contains('PL312')]['count'].mean()
     sites['count'] = sites['count']/UMI_norm_factor
+
+    # Exclude dinucleotides if necessary
+    sites = sites[~sites['genome_dinucleotide'].isin(dn_exclusion)]
 
     # Split into left and right
     complement = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A'}
