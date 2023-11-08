@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 
-def extract_excel_cs_data(input_file, sheet_names, output_dir, output_name):
+def extract_excel_cs_data(input_file, sheet_names, output_dir, output_name, dn_exclusion=[]):
     # Load data from cryptic seq experiment
     sites_xl = pd.ExcelFile(input_file)
     sheets = []
@@ -11,6 +11,9 @@ def extract_excel_cs_data(input_file, sheet_names, output_dir, output_name):
 
     # Only take canonical dinucleotide insertions
     sites = sites[sites['genome_dinucleotide'] == sites['donor'].str.slice(5,7)]
+
+    # Exclude dinucleotides if necessary
+    sites = sites[~sites['genome_dinucleotide'].isin(dn_exclusion)]
 
     # Sum count at identical sites
     sites = sites.groupby(['seq'], as_index=False).sum(numeric_only=False)
