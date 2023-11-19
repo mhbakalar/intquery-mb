@@ -8,10 +8,14 @@ import numpy as np
 from .. import models
 from cryptic.models import datasets
 
+'''
+Multi class data module. Currently designed for three class use – decoy, low, high activity.
+'''
 class MulticlassDataModule(L.LightningDataModule):
-    def __init__(self, data_path, add_decoys=False, n_classes=4, train_test_split=1.0, batch_size=32):
+    def __init__(self, data_path, threshold, add_decoys=False, n_classes=2, train_test_split=1.0, batch_size=32):
         super().__init__()
         self.data_path = data_path
+        self.threshold = threshold
         self.add_decoys = add_decoys
         self.n_classes = n_classes
         self.train_test_split = train_test_split
@@ -25,7 +29,7 @@ class MulticlassDataModule(L.LightningDataModule):
         sites = pd.read_csv(os.path.join(self.data_path, fname))
 
         # Threshold the data to assign a label. This code should live somewhere else...
-        sites['label'] = (sites['norm_count'] > 1e-2).astype(int)
+        sites['label'] = (sites['norm_count'] > self.threshold).astype(int)
 
         # Compute class frequencies for weighting
         class_sample_count = np.array([len(np.where(sites['label'] == c)[0]) for c in np.unique(sites['label'])])
@@ -80,6 +84,9 @@ class MulticlassDataModule(L.LightningDataModule):
     def predict_dataloader(self):
         return torch.utils.data.DataLoader(self.pred_dataset, batch_size=self.batch_size)
 
+'''
+Genome scanning data module.
+'''
 class GenomeDataModule(L.LightningDataModule):
     def __init__(self, data_file, batch_size=256):
         super().__init__()
