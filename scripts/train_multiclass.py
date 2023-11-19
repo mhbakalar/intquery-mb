@@ -4,6 +4,14 @@ import numpy as np
 import torch
 import lightning.pytorch as pl
 
+# Set up path to import parent modules
+from pathlib import Path
+import sys  
+
+# Add to sys.path
+sys.path.insert(0, str(Path().resolve().parents[1]))
+
+# Local cryptic module imports
 import cryptic.models as models
 from cryptic.lightning import data_modules, modules
 from cryptic.models import models
