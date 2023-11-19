@@ -41,6 +41,7 @@ if __name__ == "__main__":
     trainer.fit(lit_model, data_module)
 
     # Evaluate on chromosome 1
+    # Fast prediction code. Currently runs on one chromosome only
     genomic_reference_file = '../../data/reference/hg38.fa'
 
     pred_data_module = data_modules.GenomeDataModule(genomic_reference_file)
