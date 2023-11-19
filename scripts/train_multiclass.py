@@ -29,7 +29,7 @@ if __name__ == "__main__":
     train_test_split = 0.8
 
     # Build the data module
-    data_module = data_modules.MulticlassDataModule(data_path, n_classes=n_classes, train_test_split=train_test_split, batch_size=32)
+    data_module = data_modules.MulticlassDataModule(data_path, threshold=0.01, n_classes=n_classes, train_test_split=train_test_split, batch_size=32)
 
     # Build model
     model = models.MLPModel(input_size=input_size, hidden_size=hidden_size, output_size=n_classes, n_hidden=n_hidden, dropout=0.5)
