@@ -39,3 +39,11 @@ if __name__ == "__main__":
     tb_logger = pl.loggers.TensorBoardLogger(save_dir="lightning_logs/")
     trainer = pl.Trainer(max_epochs=1, logger=tb_logger, default_root_dir='.')
     trainer.fit(lit_model, data_module)
+
+    # Evaluate on chromosome 1
+    genomic_reference_file = '../../data/reference/hg38.fa'
+
+    pred_data_module = data_modules.GenomeDataModule(genomic_reference_file)
+    preds = trainer.predict(lit_model, pred_data_module)
+    preds = torch.hstack(preds[:-1])
+    
