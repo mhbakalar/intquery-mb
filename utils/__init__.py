@@ -1,1 +1,1 @@
-__all__ = ["cs_excel_data", "genome_utils"]
+__all__ = ["cs_excel_data", "genome_utils", "fasta_data"]

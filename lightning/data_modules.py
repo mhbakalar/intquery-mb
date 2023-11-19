@@ -1,13 +1,14 @@
 import torch
-import lightning.pytorch as pl
+import lightning as L
 import torch.nn.functional as F
 import torchmetrics
 import pandas as pd
 import os
 import numpy as np
-from .. import datasets
+from .. import models
+from cryptic.models import datasets
 
-class DataModule(pl.LightningDataModule):
+class MulticlassDataModule(L.LightningDataModule):
     def __init__(self, data_path, add_decoys=False, n_classes=4, train_test_split=1.0, batch_size=32):
         super().__init__()
         self.data_path = data_path
@@ -41,7 +42,7 @@ class DataModule(pl.LightningDataModule):
         # Convert labels to one hot and build dataset
         one_hot_labels = F.one_hot(torch.tensor(labels), num_classes=self.n_classes)
         self.seq_length = len(sequences[0])
-        self.dataset = datasets.data.SequenceDataset(sequences, one_hot_labels)
+        self.dataset = models.datasets.SequenceDataset(sequences, one_hot_labels)
 
         if self.add_decoys:
             # Generate random decoy sequences
@@ -76,5 +77,18 @@ class DataModule(pl.LightningDataModule):
     def test_dataloader(self):
         return torch.utils.data.DataLoader(self.test_dataset, batch_size=self.batch_size)
     
+    def predict_dataloader(self):
+        return torch.utils.data.DataLoader(self.pred_dataset, batch_size=self.batch_size)
+
+class GenomeDataModule(L.LightningDataModule):
+    def __init__(self, data_file, batch_size=256):
+        super().__init__()
+        self.data_file = data_file
+        self.batch_size = batch_size
+
+    def setup(self, stage: str):
+        if stage == 'predict':
+            self.pred_dataset = models.datasets.GenomeBoxcarDataset(fasta_file=self.data_file)
+
     def predict_dataloader(self):
         return torch.utils.data.DataLoader(self.pred_dataset, batch_size=self.batch_size)

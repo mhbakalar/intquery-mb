@@ -6,7 +6,7 @@ import torch.utils.data
 '''
 A simple fully connected neural network
 '''
-class Model(nn.Module):
+class MLPModel(nn.Module):
   def __init__(self, input_size, hidden_size, output_size=1, n_hidden=1, dropout=0.2):
     super().__init__()
 
