@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
     # Evaluate on chromosome 1
     # Fast prediction code. Currently runs on one chromosome only
-    genomic_reference_file = '../../data/reference/hg38.fa'
+    genomic_reference_file = '../../reference/hg38.fa'
 
     pred_data_module = data_modules.GenomeDataModule(genomic_reference_file)
     preds = trainer.predict(lit_model, pred_data_module)

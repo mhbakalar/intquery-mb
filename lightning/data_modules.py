@@ -88,7 +88,7 @@ class MulticlassDataModule(L.LightningDataModule):
 Genome scanning data module.
 '''
 class GenomeDataModule(L.LightningDataModule):
-    def __init__(self, data_file, batch_size=256):
+    def __init__(self, data_file, batch_size=64):
         super().__init__()
         self.data_file = data_file
         self.batch_size = batch_size
