@@ -100,4 +100,9 @@ class GenomeDataModule(L.LightningDataModule):
             self.pred_dataset = models.datasets.GenomeBoxcarDataset(fasta_file=self.data_file)
 
     def predict_dataloader(self):
-        return torch.utils.data.DataLoader(self.pred_dataset, num_workers=3, pin_memory=True, batch_size=self.batch_size)
+
+        def collate_fn(data):
+            print([len(e) for e in data])
+            return torch.stack(data)
+
+        return torch.utils.data.DataLoader(self.pred_dataset, collate_fn=collate_fn, num_workers=3, pin_memory=True, batch_size=self.batch_size)
