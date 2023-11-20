@@ -7,6 +7,7 @@ import pandas as pd
 import os
 import numpy as np
 from .. import models
+from cryptic.models import datasets
 
 '''
 Multi class data module. Currently designed for three class use – decoy, low, high activity.
@@ -99,4 +100,4 @@ class GenomeDataModule(L.LightningDataModule):
             self.pred_dataset = models.datasets.GenomeBoxcarDataset(fasta_file=self.data_file)
 
     def predict_dataloader(self):
-        return torch.utils.data.DataLoader(self.pred_dataset, pin_memory=True, batch_size=self.batch_size)
+        return torch.utils.data.DataLoader(self.pred_dataset, num_workers=3, pin_memory=True, batch_size=self.batch_size)

@@ -19,7 +19,7 @@ from cryptic.models import models
 if __name__ == "__main__":
     # Set parameters (add CLI interface soon)
     data_path = '../data/TB000208a'
-    genomic_reference_file = '../../data/reference/hg38.fa'
+    genomic_reference_file = '../../reference/hg38.fa'
     n_classes = 2
     seq_length = 22
     vocab_size = 4
