@@ -1,1 +1,1 @@
-__all__ = ["models", "notebooks", "utils", "lightning"]
+__all__ = ["models", "notebooks", "utils", "lit_modules"]

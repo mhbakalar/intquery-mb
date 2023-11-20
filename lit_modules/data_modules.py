@@ -2,20 +2,21 @@ import torch
 import lightning as L
 import torch.nn.functional as F
 import torchmetrics
+import genomepy
 import pandas as pd
 import os
 import numpy as np
 from .. import models
-from cryptic.models import datasets
 
 '''
 Multi class data module. Currently designed for three class use – decoy, low, high activity.
 '''
 class MulticlassDataModule(L.LightningDataModule):
-    def __init__(self, data_path, threshold, add_decoys=False, n_classes=2, train_test_split=1.0, batch_size=32):
+    def __init__(self, data_path, threshold, genomic_reference_file=None, add_decoys=False, n_classes=2, train_test_split=1.0, batch_size=32):
         super().__init__()
         self.data_path = data_path
         self.threshold = threshold
+        self.genomic_reference_file = genomic_reference_file
         self.add_decoys = add_decoys
         self.n_classes = n_classes
         self.train_test_split = train_test_split
@@ -51,8 +52,8 @@ class MulticlassDataModule(L.LightningDataModule):
         if self.add_decoys:
             # Generate random decoy sequences
             decoy_count = len(sites)
-            genome = genomepy.genome.Genome(genomic_reference_file)
-            samples = genome.get_random_sequences(n=decoy_count, length=seq_length-1, max_n=0)
+            genome = genomepy.genome.Genome(self.genomic_reference_file)
+            samples = genome.get_random_sequences(n=decoy_count, length=self.seq_length-1, max_n=0)
             decoys = pd.Series(list(map(lambda row: genome.get_seq(*row).seq.upper(), samples)))
             decoys_labels = np.zeros(len(decoys))
 
@@ -98,4 +99,4 @@ class GenomeDataModule(L.LightningDataModule):
             self.pred_dataset = models.datasets.GenomeBoxcarDataset(fasta_file=self.data_file)
 
     def predict_dataloader(self):
-        return torch.utils.data.DataLoader(self.pred_dataset, batch_size=self.batch_size)
+        return torch.utils.data.DataLoader(self.pred_dataset, pin_memory=True, batch_size=self.batch_size)

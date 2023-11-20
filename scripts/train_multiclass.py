@@ -13,13 +13,13 @@ sys.path.insert(0, str(Path().resolve().parents[1]))
 
 # Local cryptic module imports
 import cryptic.models as models
-from cryptic.lightning import data_modules, modules
+from cryptic.lit_modules import data_modules, modules
 from cryptic.models import models
 
 if __name__ == "__main__":
     # Set parameters (add CLI interface soon)
     data_path = '../data/TB000208a'
-    genomic_reference_file = '../data/references/hg38.fa'
+    genomic_reference_file = '../../data/reference/hg38.fa'
     n_classes = 2
     seq_length = 22
     vocab_size = 4
@@ -42,8 +42,6 @@ if __name__ == "__main__":
 
     # Evaluate on chromosome 1
     # Fast prediction code. Currently runs on one chromosome only
-    genomic_reference_file = '../../reference/hg38.fa'
-
     pred_data_module = data_modules.GenomeDataModule(genomic_reference_file)
     preds = trainer.predict(lit_model, pred_data_module)
     preds = torch.hstack(preds[:-1])
