@@ -19,7 +19,7 @@ from cryptic.models import models
 if __name__ == "__main__":
     # Set parameters (add CLI interface soon)
     data_path = '../data/TB000208a'
-    genomic_reference_file = '../../reference/hg38.fa'
+    genomic_reference_file = '../../data/reference/hg38.fa'
     n_classes = 2
     seq_length = 22
     vocab_size = 4
@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
     # Evaluate on chromosome 1
     # Fast prediction code. Currently runs on one chromosome only
-    pred_data_module = data_modules.GenomeDataModule(genomic_reference_file)
+    pred_data_module = data_modules.GenomeDataModule(genomic_reference_file, num_workers=0)
     preds = trainer.predict(lit_model, pred_data_module)
     preds = torch.hstack(preds[:-1])
     

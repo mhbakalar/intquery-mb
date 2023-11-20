@@ -90,9 +90,10 @@ class MulticlassDataModule(L.LightningDataModule):
 Genome scanning data module.
 '''
 class GenomeDataModule(L.LightningDataModule):
-    def __init__(self, data_file, batch_size=64):
+    def __init__(self, data_file, num_workers=0, batch_size=64):
         super().__init__()
         self.data_file = data_file
+        self.num_workers = 0
         self.batch_size = batch_size
 
     def setup(self, stage: str):
@@ -105,4 +106,4 @@ class GenomeDataModule(L.LightningDataModule):
             print([len(e) for e in data])
             return torch.stack(data)
 
-        return torch.utils.data.DataLoader(self.pred_dataset, collate_fn=collate_fn, num_workers=3, pin_memory=True, batch_size=self.batch_size)
+        return torch.utils.data.DataLoader(self.pred_dataset, collate_fn=collate_fn, num_workers=self.num_workers, pin_memory=True, batch_size=self.batch_size)
