@@ -103,6 +103,7 @@ class GenomeDataModule(L.LightningDataModule):
     def predict_dataloader(self):
 
         def collate_fn(data):
+            print(data)
             for e in data:
                 if len(e) != 22:
                     print(data)
