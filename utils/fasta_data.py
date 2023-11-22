@@ -115,9 +115,6 @@ class FastaInterval():
     chromosome = self.seqs[chr_name]
     chromosome_length = len(chromosome)
 
-    if interval_length != 22:
-      print(start, end, interval_length)
-      
     if exists(self.shift_augs):
       min_shift, max_shift = self.shift_augs
       max_shift += 1
@@ -149,6 +146,9 @@ class FastaInterval():
       end = chromosome_length
 
     seq = ('.' * left_padding) + str(chromosome[start:end]) + ('.' * right_padding)
+
+    if len(seq) != 22:
+      print(len(seq), seq)
 
     should_rc_aug = self.rc_aug and coin_flip()
 
