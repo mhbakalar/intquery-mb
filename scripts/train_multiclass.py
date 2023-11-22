@@ -43,7 +43,7 @@ if __name__ == "__main__":
 
     # Evaluate on chromosome 1
     # Fast prediction code. Currently runs on one chromosome only
-    pred_data_module = data_modules.GenomeDataModule(genomic_reference_file, batch_size=batch_size, num_workers=3)
+    pred_data_module = data_modules.GenomeDataModule(genomic_reference_file, batch_size=batch_size, num_workers=4)
     preds = trainer.predict(lit_model, pred_data_module)
     preds = torch.hstack(preds[:-1])
     
