@@ -147,8 +147,9 @@ class FastaInterval():
 
     seq = ('.' * left_padding) + str(chromosome[start:end]) + ('.' * right_padding)
 
-    if len(seq) != 22:
-      print(len(seq), seq, end-start)
+    # Block until correct sequence is returned
+    while len(seq) != end-start:
+      seq = str(chromosome[start:end])
 
     should_rc_aug = self.rc_aug and coin_flip()
 
