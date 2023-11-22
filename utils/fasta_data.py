@@ -99,12 +99,13 @@ class FastaInterval():
     context_length = None,
     return_seq_indices = False,
     shift_augs = None,
-    rc_aug = False
+    rc_aug = False,
+    read_ahead = 0
   ):
     fasta_file = Path(fasta_file)
     assert fasta_file.exists(), 'path to fasta file must exist'
 
-    self.seqs = Fasta(str(fasta_file), read_ahead=1000)
+    self.seqs = Fasta(str(fasta_file), read_ahead=read_ahead)  # Must be less than batch*len(seq) when multithread
     self.return_seq_indices = return_seq_indices
     self.context_length = context_length
     self.shift_augs = shift_augs

@@ -74,7 +74,8 @@ class GenomeBoxcarDataset(Dataset):
     return_seq_indices = False,
     shift_augs = None,
     rc_aug = False,
-    return_augs = False
+    return_augs = False,
+    read_ahead = 0
   ):
     super().__init__()
     self.window_length = window_length
@@ -88,7 +89,8 @@ class GenomeBoxcarDataset(Dataset):
       context_length = context_length,
       return_seq_indices = return_seq_indices,
       shift_augs = shift_augs,
-      rc_aug = rc_aug
+      rc_aug = rc_aug,
+      read_ahead = read_ahead
     )
     
     # Collect fasta index information
