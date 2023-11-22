@@ -113,6 +113,7 @@ class FastaInterval():
   def __call__(self, chr_name, start, end, return_augs = False):
     interval_length = end - start
     chromosome = self.seqs[chr_name]
+    print(type(chromosome))
     chromosome_length = len(chromosome)
 
     if exists(self.shift_augs):
