@@ -104,7 +104,7 @@ class FastaInterval():
     fasta_file = Path(fasta_file)
     assert fasta_file.exists(), 'path to fasta file must exist'
 
-    self.seqs = Fasta(str(fasta_file), read_ahead=1000)
+    self.seqs = Fasta(str(fasta_file), read_ahead=704)
     self.return_seq_indices = return_seq_indices
     self.context_length = context_length
     self.shift_augs = shift_augs
