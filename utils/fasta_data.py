@@ -150,6 +150,7 @@ class FastaInterval():
     # Block until correct sequence is returned
     while len(seq) != end-start:
       print(seq, len(seq), start, end)
+      end = end+1
       seq = str(chromosome[start:end+1])
 
     should_rc_aug = self.rc_aug and coin_flip()
