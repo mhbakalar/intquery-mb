@@ -140,10 +140,12 @@ class FastaInterval():
     if start < 0:
       left_padding = -start
       start = 0
+      print("Left padding")
 
     if end > chromosome_length:
       right_padding = end - chromosome_length
       end = chromosome_length
+      print("Right padding")
 
     seq = ('.' * left_padding) + str(chromosome[start:end]) + ('.' * right_padding)
 
