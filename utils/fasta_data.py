@@ -99,12 +99,13 @@ class FastaInterval():
     context_length = None,
     return_seq_indices = False,
     shift_augs = None,
-    rc_aug = False
+    rc_aug = False,
+    read_ahead = 0
   ):
     fasta_file = Path(fasta_file)
     assert fasta_file.exists(), 'path to fasta file must exist'
 
-    self.seqs = Fasta(str(fasta_file), read_ahead=10000)
+    self.seqs = Fasta(str(fasta_file), read_ahead=read_ahead)  # Must be less than batch*len(seq) when multithread
     self.return_seq_indices = return_seq_indices
     self.context_length = context_length
     self.shift_augs = shift_augs
@@ -147,8 +148,10 @@ class FastaInterval():
 
     seq = ('.' * left_padding) + str(chromosome[start:end]) + ('.' * right_padding)
 
-    if len(seq) != 22:
-      print(len(seq), seq)
+    # Block until correct sequence is returned
+    if len(seq) != end-start:
+      print(seq, len(seq), start, end)
+      return str_to_one_hot('n'*interval_length)
 
     should_rc_aug = self.rc_aug and coin_flip()
 
@@ -166,7 +169,7 @@ class FastaInterval():
       one_hot = one_hot_reverse_complement(one_hot)
 
     if not return_augs:
-      return one_hot, seq
+      return one_hot
 
     # returns the shift integer as well as the bool (for whether reverse complement was activated)
     # for this particular genomic sequence

@@ -49,11 +49,11 @@ class Classifier(pl.LightningModule):
     
     def predict_step(self, batch, batch_idx):
         # Model pass
-        data = batch
+        data, ind = batch
         logits = self(data)
-        # output = self.sigmoid(self(data))
-        # preds = torch.argmax(output, 1)
-        return logits
+        output = self.sigmoid(logits)
+        preds = torch.argmax(output, 1)
+        return preds, ind
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)

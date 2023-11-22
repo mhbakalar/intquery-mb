@@ -90,19 +90,19 @@ class MulticlassDataModule(L.LightningDataModule):
 Genome scanning data module.
 '''
 class GenomeDataModule(L.LightningDataModule):
-    def __init__(self, data_file, num_workers=0, batch_size=64):
+    def __init__(self, data_file, chr, num_workers=0, batch_size=32):
         super().__init__()
         self.data_file = data_file
+        self.chr= chr
         self.num_workers = num_workers
         self.batch_size = batch_size
 
     def setup(self, stage: str):
         if stage == 'predict':
-            self.pred_dataset = models.datasets.GenomeBoxcarDataset(fasta_file=self.data_file)
+            self.pred_dataset = models.datasets.GenomeBoxcarDataset(fasta_file=self.data_file, 
+                                                                    chr=self.chr,
+                                                                    window_length=22,
+                                                                    read_ahead=self.batch_size*22)
 
     def predict_dataloader(self):
-
-        def collate_fn(data):
-            return torch.stack(data)
-
-        return torch.utils.data.DataLoader(self.pred_dataset, collate_fn=collate_fn, num_workers=self.num_workers, pin_memory=True, batch_size=self.batch_size)
+        return torch.utils.data.DataLoader(self.pred_dataset, num_workers=self.num_workers, pin_memory=True, batch_size=self.batch_size)
