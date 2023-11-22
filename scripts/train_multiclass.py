@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import torch
 import lightning.pytorch as pl
+from pyfaidx import Fasta
 
 # Set up path to import parent modules
 from pathlib import Path
@@ -42,8 +43,19 @@ if __name__ == "__main__":
     trainer.fit(lit_model, data_module)
 
     # Evaluate on chromosome 1
-    # Fast prediction code. Currently runs on one chromosome only
-    pred_data_module = data_modules.GenomeDataModule(genomic_reference_file, batch_size=batch_size, num_workers=4)
-    preds = trainer.predict(lit_model, pred_data_module)
-    preds = torch.hstack(preds[:-1])
+    # Fast prediction code. Currently runs on chrom 1
+    chromosomes = list(Fasta(genomic_reference_file).keys())
+    chr_name = chromosomes[0]
+    pred_data_module = data_modules.GenomeDataModule(genomic_reference_file, chr=chr_name, batch_size=batch_size, num_workers=0)
+    batch_preds = trainer.predict(lit_model, pred_data_module)
+    
+    # Construct bed file for positive predictions
+    pos_indices = []
+    for batch in batch_preds:
+        pred, indices = batch[0], batch[1]
+        pos_indices.append(indices[torch.nonzero(pred)])
+    
+    flat_indices = torch.flatten(torch.vstack(pos_indices))
+    pred_bed = pd.DataFrame.from_dict({'chr':chr_name, 'start':flat_indices, 'end':flat_indices+seq_length})
+    print(pred_bed)
     

@@ -67,8 +67,8 @@ class GenomeBoxcarDataset(Dataset):
   def __init__(
     self,
     fasta_file,
+    chr,
     filter_df_fn = utils.fasta_data.identity,
-    chr_bed_to_fasta_map = dict(),
     window_length = 22,
     context_length = None,
     return_seq_indices = False,
@@ -79,10 +79,7 @@ class GenomeBoxcarDataset(Dataset):
   ):
     super().__init__()
     self.window_length = window_length
-    
-    # if the chromosome name in the bed file is different than the keyname in the fasta
-    # can remap on the fly
-    self.chr_bed_to_fasta_map = chr_bed_to_fasta_map
+    self.chr = chr
 
     self.fasta = utils.fasta_data.FastaInterval(
       fasta_file = fasta_file,
@@ -94,10 +91,8 @@ class GenomeBoxcarDataset(Dataset):
     )
     
     # Collect fasta index information
-    self.chr_keys = list(self.fasta.seqs.keys())
-    self.chr_index = 0
-    self.length = len(self.fasta.seqs[self.chr_keys[self.chr_index]]) - window_length
-    self.chr = self.chr_keys[self.chr_index]
+    #self.length = len(self.fasta.seqs[self.chr]) - window_length
+    self.length = 10000
     self.start = 0
 
     self.return_augs = return_augs
@@ -107,7 +102,6 @@ class GenomeBoxcarDataset(Dataset):
 
   def __getitem__(self, ind):
     chr_name, start, end = (self.chr, ind, ind + self.window_length)
-    chr_name = self.chr_bed_to_fasta_map.get(chr_name, chr_name)
     one_hot = self.fasta(chr_name, start, end, return_augs = self.return_augs)
-    return one_hot
+    return one_hot, ind
 
