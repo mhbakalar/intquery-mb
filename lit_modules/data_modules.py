@@ -103,9 +103,10 @@ class GenomeDataModule(L.LightningDataModule):
     def predict_dataloader(self):
 
         def collate_fn(data):
-            try:
-                return torch.stack(data)
-            except:
-                return None
+            for e in data:
+                if len(e) != 22:
+                    print(data)
+
+            return torch.stack(data)
 
         return torch.utils.data.DataLoader(self.pred_dataset, collate_fn=collate_fn, num_workers=self.num_workers, pin_memory=True, batch_size=self.batch_size)
