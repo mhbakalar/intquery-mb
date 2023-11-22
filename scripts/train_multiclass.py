@@ -27,9 +27,10 @@ if __name__ == "__main__":
     hidden_size = 8
     n_hidden = 2
     train_test_split = 0.8
+    batch_size=128
 
     # Build the data module
-    data_module = data_modules.MulticlassDataModule(data_path, threshold=0.01, n_classes=n_classes, train_test_split=train_test_split, batch_size=32)
+    data_module = data_modules.MulticlassDataModule(data_path, threshold=0.01, n_classes=n_classes, train_test_split=train_test_split, batch_size=batch_size)
 
     # Build model
     model = models.MLPModel(input_size=input_size, hidden_size=hidden_size, output_size=n_classes, n_hidden=n_hidden, dropout=0.5)
@@ -42,7 +43,7 @@ if __name__ == "__main__":
 
     # Evaluate on chromosome 1
     # Fast prediction code. Currently runs on one chromosome only
-    pred_data_module = data_modules.GenomeDataModule(genomic_reference_file, num_workers=3)
+    pred_data_module = data_modules.GenomeDataModule(genomic_reference_file, batch_size=batch_size, num_workers=3)
     preds = trainer.predict(lit_model, pred_data_module)
     preds = torch.hstack(preds[:-1])
     

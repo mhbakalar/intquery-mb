@@ -90,7 +90,7 @@ class MulticlassDataModule(L.LightningDataModule):
 Genome scanning data module.
 '''
 class GenomeDataModule(L.LightningDataModule):
-    def __init__(self, data_file, num_workers=0, batch_size=64):
+    def __init__(self, data_file, num_workers=0, batch_size=32):
         super().__init__()
         self.data_file = data_file
         self.num_workers = num_workers
@@ -99,7 +99,7 @@ class GenomeDataModule(L.LightningDataModule):
     def setup(self, stage: str):
         if stage == 'predict':
             self.pred_dataset = models.datasets.GenomeBoxcarDataset(fasta_file=self.data_file, 
-                                                                    window_length = 22,
+                                                                    window_length=22,
                                                                     read_ahead=self.batch_size*22)
 
     def predict_dataloader(self):
