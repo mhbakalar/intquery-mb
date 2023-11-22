@@ -104,7 +104,7 @@ class FastaInterval():
     fasta_file = Path(fasta_file)
     assert fasta_file.exists(), 'path to fasta file must exist'
 
-    self.seqs = Fasta(str(fasta_file))
+    self.seqs = Fasta(str(fasta_file), read_ahead=10000)
     self.return_seq_indices = return_seq_indices
     self.context_length = context_length
     self.shift_augs = shift_augs
@@ -171,4 +171,4 @@ class FastaInterval():
     rand_shift_tensor = torch.tensor([rand_shift])
     rand_aug_bool_tensor = torch.tensor([should_rc_aug])
 
-    return one_hot, rand_shift_tensor, rand_aug_bool_tensor, seq
+    return one_hot, rand_shift_tensor, rand_aug_bool_tensor
