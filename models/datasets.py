@@ -106,5 +106,8 @@ class GenomeBoxcarDataset(Dataset):
   def __getitem__(self, ind):
     chr_name, start, end = (self.chr, ind, ind + self.window_length)
     chr_name = self.chr_bed_to_fasta_map.get(chr_name, chr_name)
-    return self.fasta(chr_name, start, end, return_augs = self.return_augs)
+    data = self.fasta(chr_name, start, end, return_augs = self.return_augs)
+    if len(data) != 22:
+      print(data)
+    return data
 
