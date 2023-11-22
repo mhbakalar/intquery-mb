@@ -93,7 +93,7 @@ class GenomeDataModule(L.LightningDataModule):
     def __init__(self, data_file, num_workers=0, batch_size=64):
         super().__init__()
         self.data_file = data_file
-        self.num_workers = 0
+        self.num_workers = num_workers
         self.batch_size = batch_size
 
     def setup(self, stage: str):
