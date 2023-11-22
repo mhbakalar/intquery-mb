@@ -109,5 +109,6 @@ class GenomeBoxcarDataset(Dataset):
     data = self.fasta(chr_name, start, end, return_augs = self.return_augs)
     if len(data) != 22:
       print(data)
+      print(chr_name, start, end)
     return data
 
