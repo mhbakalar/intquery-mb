@@ -163,7 +163,7 @@ class FastaInterval():
       one_hot = one_hot_reverse_complement(one_hot)
 
     if not return_augs:
-      return one_hot
+      return one_hot, seq
 
     # returns the shift integer as well as the bool (for whether reverse complement was activated)
     # for this particular genomic sequence
