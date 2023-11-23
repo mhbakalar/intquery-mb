@@ -29,11 +29,11 @@ if __name__ == "__main__":
     train_test_split = 0.8
 
     # Model tuning
-    def train_func():
+    def train_func(config):
 
         # Build the lightning modules
-        data_module = data_modules.MulticlassDataModule(data_path, threshold=0.01, n_classes=n_classes, train_test_split=train_test_split, batch_size=32)
-        lit_model = modules.Classifier(input_size=input_size, hidden_size=hidden_size, n_classes=n_classes, n_hidden=n_hidden, dropout=0.5)
+        data_module = data_modules.MulticlassDataModule(data_path, threshold=config['threshold'], n_classes=n_classes, train_test_split=train_test_split, batch_size=config['batch_size'])
+        lit_model = modules.Classifier(input_size=input_size, hidden_size=config['hidden_size'], n_classes=n_classes, n_hidden=n_hidden, dropout=0.5, lr=config['lr'])
 
         trainer = pl.Trainer(
             devices="auto",
