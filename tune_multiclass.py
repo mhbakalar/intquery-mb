@@ -69,8 +69,8 @@ if __name__ == "__main__":
     run_config = RunConfig(
         checkpoint_config=CheckpointConfig(
             num_to_keep=2,
-            checkpoint_score_attribute="val_loss",
-            checkpoint_score_order="min",
+            checkpoint_score_attribute="val_acc_step",
+            checkpoint_score_order="max",
         ),
     )
 
@@ -88,8 +88,8 @@ if __name__ == "__main__":
             ray_trainer,
             param_space={"train_loop_config": search_space},
             tune_config=tune.TuneConfig(
-                metric="val_loss",
-                mode="min",
+                metric="val_acc_step",
+                mode="max",
                 num_samples=num_samples,
                 scheduler=scheduler,
             ),
