@@ -43,9 +43,12 @@ class Classifier(pl.LightningModule):
         # Model pass
         data, target = batch
         logits = self(data)
+        output = self.sigmoid(logits)
+        preds = torch.argmax(output, 1)
+
         loss = self.loss_fn(logits, target.float())
         self.logging(logits, target, loss, 'test')
-        return loss
+        return loss, preds
     
     def predict_step(self, batch, batch_idx):
         # Model pass

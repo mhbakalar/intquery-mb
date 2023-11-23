@@ -101,8 +101,8 @@ class GenomeDataModule(L.LightningDataModule):
         if stage == 'predict':
             self.pred_dataset = models.datasets.GenomeBoxcarDataset(fasta_file=self.data_file, 
                                                                     chr=self.chr,
-                                                                    window_length=22,
-                                                                    read_ahead=self.batch_size*22)
+                                                                    window_length=46,
+                                                                    read_ahead=self.batch_size*46)
 
     def predict_dataloader(self):
         return torch.utils.data.DataLoader(self.pred_dataset, num_workers=self.num_workers, pin_memory=True, batch_size=self.batch_size)

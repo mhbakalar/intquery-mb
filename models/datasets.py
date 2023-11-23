@@ -69,7 +69,7 @@ class GenomeBoxcarDataset(Dataset):
     fasta_file,
     chr,
     filter_df_fn = utils.fasta_data.identity,
-    window_length = 22,
+    window_length = 46,
     context_length = None,
     return_seq_indices = False,
     shift_augs = None,
