@@ -6,8 +6,7 @@ import genomepy
 import pandas as pd
 import os
 import numpy as np
-from .. import models
-from cryptic.models import datasets
+from models import datasets
 
 '''
 Multi class data module. Currently designed for three class use – decoy, low, high activity.
@@ -24,6 +23,7 @@ class MulticlassDataModule(L.LightningDataModule):
         self.batch_size = batch_size
 
     def setup(self, stage: str):
+        print("Threshold: ", self.threshold)
         # Select test/train dataset
         fname = stage + '.csv'
 
@@ -48,7 +48,7 @@ class MulticlassDataModule(L.LightningDataModule):
         # Convert labels to one hot and build dataset
         one_hot_labels = F.one_hot(torch.tensor(labels), num_classes=self.n_classes)
         self.seq_length = len(sequences[0])
-        self.dataset = models.datasets.SequenceDataset(sequences, one_hot_labels)
+        self.dataset = datasets.SequenceDataset(sequences, one_hot_labels)
 
         if self.add_decoys:
             # Generate random decoy sequences
@@ -101,8 +101,8 @@ class GenomeDataModule(L.LightningDataModule):
         if stage == 'predict':
             self.pred_dataset = models.datasets.GenomeBoxcarDataset(fasta_file=self.data_file, 
                                                                     chr=self.chr,
-                                                                    window_length=22,
-                                                                    read_ahead=self.batch_size*22)
+                                                                    window_length=46,
+                                                                    read_ahead=self.batch_size*46)
 
     def predict_dataloader(self):
         return torch.utils.data.DataLoader(self.pred_dataset, num_workers=self.num_workers, pin_memory=True, batch_size=self.batch_size)

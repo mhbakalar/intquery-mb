@@ -2,8 +2,7 @@ import torch
 import torch.nn.functional as F
 from torch.utils.data import Dataset
 
-from .. import utils
-from cryptic.utils import *
+import utils.fasta_data
 
 class SequenceDataset(Dataset):
   def __init__(self, sequences, labels):
@@ -19,6 +18,10 @@ class SequenceDataset(Dataset):
     one_hot = utils.fasta_data.str_to_one_hot(seq)
     return one_hot, label
 
+'''
+Return genomic intervals using fasta reference and bed file coordinates.
+Requires polar.
+'''
 class GenomeIntervalDataset(Dataset):
   def __init__(
     self,
@@ -69,7 +72,7 @@ class GenomeBoxcarDataset(Dataset):
     fasta_file,
     chr,
     filter_df_fn = utils.fasta_data.identity,
-    window_length = 22,
+    window_length = 46,
     context_length = None,
     return_seq_indices = False,
     shift_augs = None,
@@ -91,8 +94,8 @@ class GenomeBoxcarDataset(Dataset):
     )
     
     # Collect fasta index information
-    #self.length = len(self.fasta.seqs[self.chr]) - window_length
-    self.length = 10000
+    self.length = len(self.fasta.seqs[self.chr]) - window_length
+    #self.length = 10000
     self.start = 0
 
     self.return_augs = return_augs
