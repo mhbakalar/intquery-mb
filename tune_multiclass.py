@@ -32,7 +32,7 @@ if __name__ == "__main__":
     def train_func(config):
 
         # Build the lightning modules
-        data_module = data_modules.MulticlassDataModule(data_path, threshold=config['threshold'], n_classes=n_classes, train_test_split=train_test_split, batch_size=config['batch_size'])
+        data_module = data_modules.MulticlassDataModule(data_path, threshold=config['threshold'], n_classes=n_classes, train_test_split=train_test_split, batch_size=64)
         lit_model = modules.Classifier(input_size=input_size, hidden_size=config['hidden_size'], n_classes=n_classes, n_hidden=n_hidden, dropout=0.5, lr=config['lr'])
 
         trainer = pl.Trainer(
@@ -47,9 +47,8 @@ if __name__ == "__main__":
         trainer.fit(lit_model, datamodule=data_module)
 
     search_space = {
-        "hidden_size": tune.choice([512, 1024, 2048]),
-        "lr": tune.loguniform(1e-4, 1e-1),
-        "batch_size": tune.choice([32, 64]),
+        "hidden_size": tune.choice([256, 512, 1024, 2048]),
+        "lr": tune.choice([5e-3, 1e-3]),
         "threshold": tune.loguniform(1e-4, 1e-1)
     }
 
@@ -57,7 +56,7 @@ if __name__ == "__main__":
     num_epochs = 5
 
     # Number of sampls from parameter space
-    num_samples = 10
+    num_samples = 50
 
     scheduler = ASHAScheduler(max_t=num_epochs, grace_period=1, reduction_factor=2)
 
