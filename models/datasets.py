@@ -2,9 +2,7 @@ import torch
 import torch.nn.functional as F
 from torch.utils.data import Dataset
 
-# One of these imports is redundant...
-from .. import utils
-from cryptic.utils import *
+import utils.fasta_data
 
 class SequenceDataset(Dataset):
   def __init__(self, sequences, labels):

@@ -1,8 +1,9 @@
 import torch
 import lightning.pytorch as pl
 import torchmetrics
-from .. import models
-from cryptic.models import models
+
+# Need to refactor this directory name
+from models import models
 
 '''
 Wraps a multiclass classifier in Lightning
