@@ -18,12 +18,6 @@ from ray.train.lightning import (
 from pathlib import Path
 import sys  
 
-# Add to sys.path
-sys.path.insert(0, str(Path().resolve().parents[1]))
-
-import cryptic.models as models
-from cryptic.lit_modules import data_modules, modules
-
 if __name__ == "__main__":
 
     data_path = '../data/TB000208a'
@@ -38,6 +32,13 @@ if __name__ == "__main__":
 
     # Model tuning
     def train_func():
+
+        # Add to sys.path
+        sys.path.insert(0, str(Path().resolve().parents[1]))
+
+        import cryptic.models as models
+        from cryptic.lit_modules import data_modules, modules
+
         # Build the lightning modules
         data_module = data_modules.MulticlassDataModule(data_path, threshold=0.01, n_classes=n_classes, train_test_split=train_test_split, batch_size=32)
         lit_model = modules.Classifier(input_size=input_size, hidden_size=hidden_size, output_size=n_classes, n_hidden=n_hidden, dropout=0.5)
