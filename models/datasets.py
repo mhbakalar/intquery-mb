@@ -2,6 +2,7 @@ import torch
 import torch.nn.functional as F
 from torch.utils.data import Dataset
 
+# One of these imports is redundant...
 from .. import utils
 from cryptic.utils import *
 
@@ -19,6 +20,10 @@ class SequenceDataset(Dataset):
     one_hot = utils.fasta_data.str_to_one_hot(seq)
     return one_hot, label
 
+'''
+Return genomic intervals using fasta reference and bed file coordinates.
+Requires polar.
+'''
 class GenomeIntervalDataset(Dataset):
   def __init__(
     self,
@@ -91,8 +96,8 @@ class GenomeBoxcarDataset(Dataset):
     )
     
     # Collect fasta index information
-    #self.length = len(self.fasta.seqs[self.chr]) - window_length
-    self.length = 10000
+    self.length = len(self.fasta.seqs[self.chr]) - window_length
+    #self.length = 10000
     self.start = 0
 
     self.return_augs = return_augs

@@ -1,14 +1,30 @@
 import torch
 import lightning.pytorch as pl
 import torchmetrics
+from .. import models
+from cryptic.models import models
 
 '''
 Wraps a multiclass classifier in Lightning
 '''
 class Classifier(pl.LightningModule):
-    def __init__(self, model, n_classes):
+    def __init__(self, input_size, hidden_size, n_hidden, n_classes, dropout=0.5, lr=1e-3):
         super().__init__()
-        self.model = model
+
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.n_hidden = n_hidden
+        self.n_classes = n_classes
+        self.dropout = dropout
+        self.lr = lr
+        
+        self.model = models.MLPModel(
+            input_size=self.input_size, 
+            hidden_size=self.hidden_size, 
+            output_size=self.n_classes, 
+            n_hidden=self.n_hidden, 
+            dropout=0.5
+        )
         self.sigmoid = torch.nn.Sigmoid()
         self.loss_fn = torch.nn.BCEWithLogitsLoss()
         self.accuracy = torchmetrics.Accuracy(task="multiclass", num_classes=n_classes)
@@ -59,5 +75,5 @@ class Classifier(pl.LightningModule):
         return preds, ind
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
         return optimizer
