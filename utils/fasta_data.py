@@ -100,7 +100,8 @@ class FastaInterval():
     return_seq_indices = False,
     shift_augs = None,
     rc_aug = False,
-    read_ahead = 0
+    read_ahead = 0,
+    return_seq = False
   ):
     fasta_file = Path(fasta_file)
     assert fasta_file.exists(), 'path to fasta file must exist'
@@ -110,6 +111,7 @@ class FastaInterval():
     self.context_length = context_length
     self.shift_augs = shift_augs
     self.rc_aug = rc_aug
+    self.return_seq = return_seq
 
   def __call__(self, chr_name, start, end, return_augs = False):
     interval_length = end - start
@@ -148,12 +150,11 @@ class FastaInterval():
 
     seq = ('.' * left_padding) + str(chromosome[start:end]) + ('.' * right_padding)
 
-    # Block until correct sequence is returned
-    if len(seq) != end-start:
-      print(seq, len(seq), start, end)
-      return str_to_one_hot('n'*interval_length)
 
     should_rc_aug = self.rc_aug and coin_flip()
+
+    if self.return_seq:
+      return seq
 
     if self.return_seq_indices:
       seq = str_to_seq_indices(seq)
