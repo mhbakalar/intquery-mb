@@ -5,33 +5,26 @@ import torch
 import lightning.pytorch as pl
 from pyfaidx import Fasta
 
-# Set up path to import parent modules
-from pathlib import Path
-import sys  
-
-# Add to sys.path
-sys.path.insert(0, str(Path().resolve().parents[1]))
-
 # Local cryptic module imports
-import cryptic.models as models
-from cryptic.lit_modules import data_modules, modules
-from cryptic.models import models
+from lit_modules import data_modules, modules
+from models import models
 
 if __name__ == "__main__":
     # Set parameters (add CLI interface soon)
-    data_path = '../data/TB000208a'
-    genomic_reference_file = '../../data/reference/hg38.fa'
+    data_path = 'data/TB000208a'
+    genomic_reference_file = '../data/reference/hg38.fa'
     n_classes = 2
-    seq_length = 22
+    seq_length = 46
     vocab_size = 4
     input_size = seq_length*vocab_size
     hidden_size = 8
     n_hidden = 2
     train_test_split = 0.8
-    batch_size=128
+    batch_size = 64
+    threshold = 0.01
 
     # Build the data module
-    data_module = data_modules.MulticlassDataModule(data_path, threshold=0.01, n_classes=n_classes, train_test_split=train_test_split, batch_size=batch_size)
+    data_module = data_modules.MulticlassDataModule(data_path, threshold=threshold, n_classes=n_classes, train_test_split=train_test_split, batch_size=batch_size)
 
     # Build model
     model = models.MLPModel(input_size=input_size, hidden_size=hidden_size, output_size=n_classes, n_hidden=n_hidden, dropout=0.5)
@@ -57,5 +50,5 @@ if __name__ == "__main__":
     
     flat_indices = torch.flatten(torch.vstack(pos_indices))
     pred_bed = pd.DataFrame.from_dict({'chr':chr_name, 'start':flat_indices, 'end':flat_indices+seq_length})
-    print(pred_bed)
+    pred_bed.to_csv('output/chr1_positive.bed', sep='\t', index=None)
     
