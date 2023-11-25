@@ -27,10 +27,8 @@ class DecoyDataset(Dataset):
     self.n_decoys = n_decoys
     self.length = length
     self.label = label
-    print(fasta_file)
     # Open fasta reference file to draw decoys from
     self.fasta = utils.fasta_data.FastaInterval(fasta_file=fasta_file)
-    print("finished opening fasta file")
 
     # Draw samples from canonical chromosomes only
     chromosomes = np.append(np.arange(1,22).astype(str), ['X','Y'])
