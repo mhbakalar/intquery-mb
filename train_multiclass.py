@@ -13,7 +13,7 @@ if __name__ == "__main__":
     # Set parameters (add CLI interface soon)
     data_path = 'data/TB000208a'
     genomic_reference_file = '../data/reference/hg38.fa'
-    n_classes = 2
+    n_classes = 3
     seq_length = 46
     vocab_size = 4
     input_size = seq_length*vocab_size
@@ -27,12 +27,22 @@ if __name__ == "__main__":
     data_module = data_modules.MulticlassDataModule(data_path, threshold=threshold, n_classes=n_classes, train_test_split=train_test_split, batch_size=batch_size)
 
     # Build model
-    lit_model = modules.Classifier(input_size=input_size, hidden_size=hidden_size, n_classes=n_classes, n_hidden=n_hidden, dropout=0.5, lr=0.001)
+    lit_model = modules.Classifier(
+        input_size=input_size, 
+        hidden_size=hidden_size, 
+        n_classes=n_classes, 
+        n_hidden=n_hidden, 
+        sequence_length=seq_length,
+        dropout=0.5, 
+        lr=0.001)
 
     # train the model
     tb_logger = pl.loggers.TensorBoardLogger(save_dir="lightning_logs/")
     trainer = pl.Trainer(max_epochs=5, logger=tb_logger, default_root_dir='.')
     trainer.fit(lit_model, data_module)
+
+    # test the model
+    trainer.test(lit_model, data_module)
 
     # Evaluate on chromosome 1
     # Fast prediction code. Currently runs on chrom 1
