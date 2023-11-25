@@ -10,20 +10,30 @@ from models import datasets
 
 '''
 Multi class data module. Currently designed for three class use – decoy, low, high activity.
+Code could be cleaned up here.
 '''
 class MulticlassDataModule(L.LightningDataModule):
-    def __init__(self, data_path, threshold, genomic_reference_file=None, add_decoys=False, n_classes=2, train_test_split=1.0, batch_size=32):
+    def __init__(self, 
+        data_path, 
+        threshold, 
+        genomic_reference_file=None, 
+        add_decoys=True, 
+        n_classes=3, 
+        sequence_length=46,
+        train_test_split=1.0, 
+        batch_size=32
+    ):
         super().__init__()
         self.data_path = data_path
         self.threshold = threshold
         self.genomic_reference_file = genomic_reference_file
         self.add_decoys = add_decoys
         self.n_classes = n_classes
+        self.sequence_length = sequence_length
         self.train_test_split = train_test_split
         self.batch_size = batch_size
 
     def setup(self, stage: str):
-        print("Threshold: ", self.threshold)
         # Select test/train dataset
         fname = stage + '.csv'
 
@@ -33,17 +43,19 @@ class MulticlassDataModule(L.LightningDataModule):
         # Threshold the data to assign a label. This code should live somewhere else...
         sites['label'] = (sites['norm_count'] > self.threshold).astype(int)
 
-        # Compute class frequencies for weighting
-        class_sample_count = np.array([len(np.where(sites['label'] == c)[0]) for c in np.unique(sites['label'])])
-
         # Cryptic sites data for training
         sequences = sites['seq'].values
         labels = sites['label'].values
 
-        # Sample weights based on label and class frequency
+        # Add space for decoys with 0 label if used
+        if self.add_decoys:
+            labels = labels + 1
+
+        # Compute sample weights based on label and class frequency
+        class_sample_count = np.array([len(np.where(labels == c)[0]) for c in np.arange(0,self.n_classes)])
         weight = 1. / class_sample_count
-        samples_weight = np.array([weight[t] for t in labels])
-        self.samples_weight = torch.from_numpy(samples_weight)
+        sample_weights = np.array([weight[t] for t in labels])
+        self.sample_weights = torch.from_numpy(sample_weights)
 
         # Convert labels to one hot and build dataset
         one_hot_labels = F.one_hot(torch.tensor(labels), num_classes=self.n_classes)
@@ -51,12 +63,13 @@ class MulticlassDataModule(L.LightningDataModule):
         self.dataset = datasets.SequenceDataset(sequences, one_hot_labels)
 
         if self.add_decoys:
-            # Generate random decoy sequences
-            decoy_count = len(sites)
-            genome = genomepy.genome.Genome(self.genomic_reference_file)
-            samples = genome.get_random_sequences(n=decoy_count, length=self.seq_length-1, max_n=0)
-            decoys = pd.Series(list(map(lambda row: genome.get_seq(*row).seq.upper(), samples)))
-            decoys_labels = np.zeros(len(decoys))
+            # Generate random decoy sequences and update dataset
+            n_decoys = len(sites)
+            decoy_weight = 1. / n_decoys
+            decoy_label = F.one_hot(torch.tensor(0), num_classes=3)
+            decoy_dataset = datasets.DecoyDataset(self.genomic_reference_file, n_decoys, self.sequence_length, decoy_label)
+            self.dataset = torch.utils.data.ConcatDataset([self.dataset, decoy_dataset])
+            self.sample_weights = torch.cat([self.sample_weights, torch.ones(n_decoys)*decoy_weight])
 
         if stage == 'fit':
             # Test and train data split
@@ -65,7 +78,7 @@ class MulticlassDataModule(L.LightningDataModule):
             self.train_dataset, self.val_dataset = torch.utils.data.random_split(self.dataset, [train_size, test_size])
 
             # Weighted random sampler for upsampling minority class for training
-            train_sample_weights = samples_weight[self.train_dataset.indices]
+            train_sample_weights = self.sample_weights[self.train_dataset.indices]
             self.train_sampler = torch.utils.data.WeightedRandomSampler(train_sample_weights, len(train_sample_weights), replacement=True)
 
         elif stage == 'test':
