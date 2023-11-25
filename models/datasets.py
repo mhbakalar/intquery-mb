@@ -1,4 +1,5 @@
-import torch
+import numpy as np
+import random
 import torch.nn.functional as F
 from torch.utils.data import Dataset
 
@@ -19,8 +20,40 @@ class SequenceDataset(Dataset):
     return one_hot, label
 
 '''
-Return genomic intervals using fasta reference and bed file coordinates.
-Requires polar.
+Dataset for decoy sequences from a genomic reference file
+'''
+class DecoyDataset(Dataset):
+  def __init__(self, fasta_file, n_decoys, length, label):
+    self.n_decoys = n_decoys
+    self.length = length
+    self.label = label
+    
+    # Open fasta reference file to draw decoys from
+    self.fasta = utils.fasta_data.FastaInterval(fasta_file=fasta_file)
+
+    # Draw samples from canonical chromosomes only
+    chromosomes = np.append(np.arange(1,22).astype(str), ['X','Y'])
+    chromosomes = np.char.add('chr', chromosomes)
+
+    self.coordinates = []
+    for i in range(0, n_decoys):
+        chr_name = random.choice(chromosomes)
+        chromosome = self.fasta.seqs[chr_name]
+        start = random.randint(0, len(chromosome)-self.length)
+        end = start + self.length
+        self.coordinates.append((chr_name, start, end))
+
+  def __len__(self):
+    return len(self.coordinates)
+
+  def __getitem__(self, idx):
+    chr_name, start, end = self.coordinates[idx]
+    one_hot = self.fasta(chr_name, start, end)
+    label = self.label
+    return one_hot, label
+
+'''
+Return genomic intervals using fasta reference and bed file coordinates. Requires polar.
 '''
 class GenomeIntervalDataset(Dataset):
   def __init__(
@@ -64,7 +97,8 @@ class GenomeIntervalDataset(Dataset):
     interval = self.df.row(ind)
     chr_name, start, end = (interval[0], interval[1], interval[2])
     chr_name = self.chr_bed_to_fasta_map.get(chr_name, chr_name)
-    return self.fasta(chr_name, start, end, return_augs = self.return_augs)
+    one_hot = self.fasta(chr_name, start, end, return_augs = self.return_augs)
+    return one_hot
   
 class GenomeBoxcarDataset(Dataset):
   def __init__(
