@@ -17,7 +17,7 @@ class MulticlassDataModule(L.LightningDataModule):
         data_path, 
         threshold, 
         genomic_reference_file=None, 
-        add_decoys=True, 
+        decoy_mul=0, 
         n_classes=3, 
         sequence_length=46,
         train_test_split=1.0, 
@@ -27,7 +27,7 @@ class MulticlassDataModule(L.LightningDataModule):
         self.data_path = data_path
         self.threshold = threshold
         self.genomic_reference_file = genomic_reference_file
-        self.add_decoys = add_decoys
+        self.decoy_mul = decoy_mul
         self.n_classes = n_classes
         self.sequence_length = sequence_length
         self.train_test_split = train_test_split
@@ -48,7 +48,7 @@ class MulticlassDataModule(L.LightningDataModule):
         labels = sites['label'].values
 
         # Add space for decoys with 0 label if used
-        if self.add_decoys:
+        if self.decoy_mul > 0:
             labels = labels + 1
 
         # Compute sample weights based on label and class frequency
@@ -62,11 +62,11 @@ class MulticlassDataModule(L.LightningDataModule):
         self.seq_length = len(sequences[0])
         self.dataset = datasets.SequenceDataset(sequences, one_hot_labels)
 
-        if self.add_decoys:
+        if self.decoy_mul > 0:
             # Generate random decoy sequences and update dataset
-            n_decoys = len(sites)
+            n_decoys = len(sites)*self.decoy_mul
             decoy_weight = 1. / n_decoys
-            decoy_label = F.one_hot(torch.tensor(0), num_classes=3)
+            decoy_label = F.one_hot(torch.tensor(0), num_classes=self.n_classes)
             decoy_dataset = datasets.DecoyDataset(
                 fasta_file=self.genomic_reference_file,
                 n_decoys=n_decoys,
@@ -82,14 +82,14 @@ class MulticlassDataModule(L.LightningDataModule):
             self.train_dataset, self.val_dataset = torch.utils.data.random_split(self.dataset, [train_size, test_size])
 
             # Weighted random sampler for upsampling minority class for training
-            train_sample_weights = self.sample_weights[self.train_dataset.indices]
-            self.train_sampler = torch.utils.data.WeightedRandomSampler(train_sample_weights, len(train_sample_weights), replacement=True)
+            #train_sample_weights = self.sample_weights[self.train_dataset.indices]
+            #self.train_sampler = torch.utils.data.WeightedRandomSampler(train_sample_weights, len(train_sample_weights), replacement=True)
+
+            # Disable weighted sampling
+            self.train_sampler = torch.utils.data.RandomSampler(self.train_dataset)
 
         elif stage == 'test':
-            self.test_dataset = self.dataset
-
-        elif stage == 'predict':
-            self.pred_dataset = self.dataset
+            self.test_dataset = self.val_dataset
 
     def train_dataloader(self):
         return torch.utils.data.DataLoader(self.train_dataset, batch_size=self.batch_size, sampler=self.train_sampler)
@@ -99,9 +99,6 @@ class MulticlassDataModule(L.LightningDataModule):
     
     def test_dataloader(self):
         return torch.utils.data.DataLoader(self.test_dataset, batch_size=self.batch_size)
-    
-    def predict_dataloader(self):
-        return torch.utils.data.DataLoader(self.pred_dataset, batch_size=self.batch_size)
 
 '''
 Genome scanning data module.

@@ -28,6 +28,7 @@ if __name__ == "__main__":
         data_path,
         threshold=threshold,
         n_classes=n_classes,
+        decoy_mul=100,
         sequence_length=seq_length,
         genomic_reference_file=genomic_reference_file,
         train_test_split=train_test_split,
