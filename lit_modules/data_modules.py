@@ -67,7 +67,11 @@ class MulticlassDataModule(L.LightningDataModule):
             n_decoys = len(sites)
             decoy_weight = 1. / n_decoys
             decoy_label = F.one_hot(torch.tensor(0), num_classes=3)
-            decoy_dataset = datasets.DecoyDataset(self.genomic_reference_file, n_decoys, self.sequence_length, decoy_label)
+            decoy_dataset = datasets.DecoyDataset(
+                fasta_file=self.genomic_reference_file,
+                n_decoys=n_decoys,
+                length=self.sequence_length,
+                label=decoy_label)
             self.dataset = torch.utils.data.ConcatDataset([self.dataset, decoy_dataset])
             self.sample_weights = torch.cat([self.sample_weights, torch.ones(n_decoys)*decoy_weight])
 

@@ -11,13 +11,13 @@ from models import models
 
 if __name__ == "__main__":
     # Set parameters (add CLI interface soon)
-    data_path = 'data/TB000208a'
+    data_path = './data/TB000208a'
     genomic_reference_file = '../data/reference/hg38.fa'
     n_classes = 3
     seq_length = 46
     vocab_size = 4
     input_size = seq_length*vocab_size
-    hidden_size = 8
+    hidden_size = 512
     n_hidden = 2
     train_test_split = 1.0
     batch_size = 64
@@ -25,20 +25,21 @@ if __name__ == "__main__":
 
     # Build the data module
     data_module = data_modules.MulticlassDataModule(
-        data_path, 
-        threshold=threshold, 
-        n_classes=n_classes, 
+        data_path,
+        threshold=threshold,
+        n_classes=n_classes,
         sequence_length=seq_length,
+        genomic_reference_file=genomic_reference_file,
         train_test_split=train_test_split,
         batch_size=batch_size)
 
     # Build model
     lit_model = modules.Classifier(
-        input_size=input_size, 
-        hidden_size=hidden_size, 
-        n_classes=n_classes, 
-        n_hidden=n_hidden, 
-        dropout=0.5, 
+        input_size=input_size,
+        hidden_size=hidden_size,
+        n_classes=n_classes,
+        n_hidden=n_hidden,
+        dropout=0.5,
         lr=0.001)
 
     # train the model
