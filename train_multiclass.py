@@ -19,7 +19,7 @@ if __name__ == "__main__":
     input_size = seq_length*vocab_size
     hidden_size = 8
     n_hidden = 2
-    train_test_split = 0.8
+    train_test_split = 1.0
     batch_size = 64
     threshold = 0.01
 
@@ -38,7 +38,7 @@ if __name__ == "__main__":
     # Fast prediction code. Currently runs on chrom 1
     chromosomes = list(Fasta(genomic_reference_file).keys())
     chr_name = chromosomes[0]
-    pred_data_module = data_modules.GenomeDataModule(genomic_reference_file, chr=chr_name, batch_size=batch_size, num_workers=0)
+    pred_data_module = data_modules.GenomeDataModule(genomic_reference_file, chr=chr_name, batch_size=batch_size, num_workers=11)
     batch_preds = trainer.predict(lit_model, pred_data_module)
     
     # Construct bed file for positive predictions
