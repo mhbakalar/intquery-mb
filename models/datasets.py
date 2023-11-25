@@ -128,7 +128,7 @@ class GenomeBoxcarDataset(Dataset):
     
     # Collect fasta index information
     #self.length = len(self.fasta.seqs[self.chr]) - window_length
-    self.length = 1e6
+    self.length = 1000000
     self.start = 0
 
     self.return_augs = return_augs

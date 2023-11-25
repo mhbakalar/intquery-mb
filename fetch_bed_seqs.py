@@ -7,5 +7,4 @@ bed_file = pd.read_csv('output/chr1_positive.bed', sep='\t')
 print(bed_file.head())
 
 for i, row in bed_file.iterrows():
-    if row['pred'] == 0:
-        print(fasta(row['chr'], int(row['start']), int(row['end'])))
+    print(fasta(row['chr'], int(row['start']), int(row['end'])))

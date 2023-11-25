@@ -9,6 +9,71 @@ import numpy as np
 from models import datasets
 
 '''
+Binary classifier. Optionally, use scalar value as sampling weight.
+'''
+class BinaryDataModule(L.LightningDataModule):
+    def __init__(self, 
+        data_path, 
+        genomic_reference_file=None, 
+        decoy_mul=0, 
+        sequence_length=46,
+        train_test_split=1.0, 
+        batch_size=32
+    ):
+        super().__init__()
+        self.data_path = data_path
+        self.genomic_reference_file = genomic_reference_file
+        self.decoy_mul = decoy_mul
+        self.sequence_length = sequence_length
+        self.train_test_split = train_test_split
+        self.batch_size = batch_size
+
+    def setup(self, stage: str):
+        # Select test/train dataset
+        fname = stage + '.csv'
+
+        # Load the cryptic seq data
+        sites = pd.read_csv(os.path.join(self.data_path, fname))
+
+        # Cryptic sites data for training
+        sequences = sites['seq'].values
+        labels = (sites['norm_count'] > 0.01).astype(int)
+        #labels = np.ones(len(sites), dtype=int)
+
+        # Convert labels to one hot and build dataset
+        self.dataset = datasets.SequenceDataset(sequences, labels)
+
+        if self.decoy_mul > 0:
+            # Generate random decoy sequences and update dataset
+            n_decoys = len(sites)*self.decoy_mul
+            decoy_weight = 1. / n_decoys
+            decoy_label = 0
+            decoy_dataset = datasets.DecoyDataset(
+                fasta_file=self.genomic_reference_file,
+                n_decoys=n_decoys,
+                length=self.sequence_length,
+                label=decoy_label)
+            self.dataset = torch.utils.data.ConcatDataset([self.dataset, decoy_dataset])
+
+        if stage == 'fit':
+            # Test and train data split
+            train_size = int(self.train_test_split*len(self.dataset))
+            test_size = len(self.dataset) - train_size
+            self.train_dataset, self.val_dataset = torch.utils.data.random_split(self.dataset, [train_size, test_size])
+
+        elif stage == 'test':
+            self.test_dataset = self.val_dataset
+
+    def train_dataloader(self):
+        return torch.utils.data.DataLoader(self.train_dataset, shuffle=True, batch_size=self.batch_size)
+
+    def val_dataloader(self):
+        return torch.utils.data.DataLoader(self.val_dataset, batch_size=self.batch_size)
+    
+    def test_dataloader(self):
+        return torch.utils.data.DataLoader(self.test_dataset, batch_size=self.batch_size)
+
+'''
 Multi class data module. Currently designed for three class use – decoy, low, high activity.
 Code could be cleaned up here.
 '''

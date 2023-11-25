@@ -13,22 +13,18 @@ if __name__ == "__main__":
     # Set parameters (add CLI interface soon)
     data_path = './data/TB000208a'
     genomic_reference_file = '../data/reference/hg38.fa'
-    n_classes = 3
     seq_length = 46
     vocab_size = 4
     input_size = seq_length*vocab_size
     hidden_size = 256
     n_hidden = 2
-    train_test_split = 1.0
+    train_test_split = 0.8
     batch_size = 64
-    threshold = 0.01
-    decoy_mul = 1
+    decoy_mul = 0
 
     # Build the data module
-    data_module = data_modules.MulticlassDataModule(
+    data_module = data_modules.BinaryDataModule(
         data_path,
-        threshold=threshold,
-        n_classes=n_classes,
         decoy_mul=decoy_mul,
         sequence_length=seq_length,
         genomic_reference_file=genomic_reference_file,
@@ -36,10 +32,9 @@ if __name__ == "__main__":
         batch_size=batch_size)
 
     # Build model
-    lit_model = modules.Classifier(
+    lit_model = modules.BinaryClassifier(
         input_size=input_size,
         hidden_size=hidden_size,
-        n_classes=n_classes,
         n_hidden=n_hidden,
         dropout=0.25,
         lr=0.001)
