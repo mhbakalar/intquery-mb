@@ -24,7 +24,13 @@ if __name__ == "__main__":
     threshold = 0.01
 
     # Build the data module
-    data_module = data_modules.MulticlassDataModule(data_path, threshold=threshold, n_classes=n_classes, train_test_split=train_test_split, batch_size=batch_size)
+    data_module = data_modules.MulticlassDataModule(
+        data_path, 
+        threshold=threshold, 
+        n_classes=n_classes, 
+        sequence_length=seq_length,
+        train_test_split=train_test_split,
+        batch_size=batch_size)
 
     # Build model
     lit_model = modules.Classifier(
@@ -32,7 +38,6 @@ if __name__ == "__main__":
         hidden_size=hidden_size, 
         n_classes=n_classes, 
         n_hidden=n_hidden, 
-        sequence_length=seq_length,
         dropout=0.5, 
         lr=0.001)
 
