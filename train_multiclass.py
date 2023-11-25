@@ -58,12 +58,15 @@ if __name__ == "__main__":
     batch_preds = trainer.predict(lit_model, pred_data_module)
     
     # Construct bed file for positive predictions
-    pos_indices = []
+    pos_samples = []
+    pos_preds = []
     for batch in batch_preds:
-        pred, indices = batch[0], batch[1]
-        pos_indices.append(indices[torch.nonzero(pred)])
+        preds, indices = batch[0], batch[1]
+        pos_indices.append(indices[torch.nonzero(preds)])
+        pos_preds.append(preds[torch.nonzero(preds)])
     
     flat_indices = torch.flatten(torch.vstack(pos_indices))
-    pred_bed = pd.DataFrame.from_dict({'chr':chr_name, 'start':flat_indices, 'end':flat_indices+seq_length})
+    flat_preds = torch.flatten(torch.vstack(pos_preds))
+    pred_bed = pd.DataFrame.from_dict({'chr':chr_name, 'start':flat_indices, 'end':flat_indices+seq_length, 'pred':flat_preds})
     pred_bed.to_csv('output/chr1_positive.bed', sep='\t', index=None)
     
