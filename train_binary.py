@@ -12,19 +12,21 @@ from models import models
 if __name__ == "__main__":
     # Set parameters (add CLI interface soon)
     data_path = './data/TB000208a'
+    decoy_path = './data/decoys'
     genomic_reference_file = '../data/reference/hg38.fa'
     seq_length = 46
-    vocab_size = 4
+    vocab_size = 5
     input_size = seq_length*vocab_size
-    hidden_size = 256
+    hidden_size = 8
     n_hidden = 2
     train_test_split = 0.8
     batch_size = 64
-    decoy_mul = 0
+    decoy_mul = 1
 
     # Build the data module
     data_module = data_modules.BinaryDataModule(
         data_path,
+        decoy_path=decoy_path,
         decoy_mul=decoy_mul,
         sequence_length=seq_length,
         genomic_reference_file=genomic_reference_file,
@@ -46,6 +48,11 @@ if __name__ == "__main__":
 
     # test the model
     trainer.test(lit_model, data_module)
+    batch_preds = trainer.predict(lit_model, data_module)
+    preds = torch.vstack([batch[0] for batch in batch_preds]).flatten()
+    labels = torch.hstack([batch[1] for batch in batch_preds])
+    df = pd.DataFrame({'label':labels, 'pred':preds})
+    df[df['label'] == 1]['pred'].hist()
 
     # Evaluate on chromosome 1
     # Fast prediction code. Currently runs on chrom 1
@@ -53,17 +60,18 @@ if __name__ == "__main__":
     chr_name = chromosomes[0]
     pred_data_module = data_modules.GenomeDataModule(genomic_reference_file, chr=chr_name, batch_size=batch_size, num_workers=0)
     batch_preds = trainer.predict(lit_model, pred_data_module)
-    
+
     # Construct bed file for positive predictions
     pos_indices = []
     pos_preds = []
     for batch in batch_preds:
-        preds, indices = batch[0], batch[1]
-        pos_indices.append(indices[torch.nonzero(preds)])
-        pos_preds.append(preds[torch.nonzero(preds)])
+        preds, inds = batch[0], batch[1]
+        hits = torch.nonzero(preds.squeeze() > 0.5)
+        pos_preds.append(preds[hits].flatten())
+        pos_indices.append(inds[hits].flatten())
     
-    flat_indices = torch.flatten(torch.vstack(pos_indices))
-    flat_preds = torch.flatten(torch.vstack(pos_preds))
+    flat_indices = torch.flatten(torch.hstack(pos_indices))
+    flat_preds = torch.flatten(torch.hstack(pos_preds))
     pred_bed = pd.DataFrame.from_dict({'chr':chr_name, 'start':flat_indices, 'end':flat_indices+seq_length, 'pred':flat_preds})
     pred_bed.to_csv('output/chr1_positive.bed', sep='\t', index=None)
     
