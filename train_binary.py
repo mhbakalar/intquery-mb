@@ -4,6 +4,7 @@ import numpy as np
 import torch
 import lightning.pytorch as pl
 from pyfaidx import Fasta
+import utils.fasta_data
 
 # Local cryptic module imports
 from lit_modules import data_modules, modules
@@ -17,11 +18,13 @@ if __name__ == "__main__":
     seq_length = 46
     vocab_size = 5
     input_size = seq_length*vocab_size
-    hidden_size = 8
+    hidden_size = 128
     n_hidden = 2
     train_test_split = 0.8
     batch_size = 64
-    decoy_mul = 1
+    decoy_mul = 2
+    dropout = 0.5
+    lr = 0.001
 
     # Build the data module
     data_module = data_modules.BinaryDataModule(
@@ -39,8 +42,8 @@ if __name__ == "__main__":
         input_size=input_size,
         hidden_size=hidden_size,
         n_hidden=n_hidden,
-        dropout=0.25,
-        lr=0.001)
+        dropout=dropout,
+        lr=lr)
 
     # train the model
     tb_logger = pl.loggers.TensorBoardLogger(save_dir="lightning_logs/")
@@ -48,12 +51,14 @@ if __name__ == "__main__":
     trainer.fit(lit_model, data_module)
 
     # test the model
+    from matplotlib import pyplot as plt
     trainer.test(lit_model, data_module)
     batch_preds = trainer.predict(lit_model, data_module)
     preds = torch.vstack([batch[0] for batch in batch_preds]).flatten()
     labels = torch.hstack([batch[1] for batch in batch_preds])
     df = pd.DataFrame({'label':labels, 'pred':preds})
     df[df['label'] == 0.9]['pred'].hist()
+    plt.show()
 
     # Evaluate on chromosome 1
     # Fast prediction code. Currently runs on chrom 1
@@ -67,7 +72,7 @@ if __name__ == "__main__":
     pos_preds = []
     for batch in batch_preds:
         preds, inds = batch[0], batch[1]
-        hits = torch.nonzero(preds.squeeze() > 0.5)
+        hits = torch.nonzero(preds.squeeze() > 0.8)
         pos_preds.append(preds[hits].flatten())
         pos_indices.append(inds[hits].flatten())
     
@@ -75,4 +80,13 @@ if __name__ == "__main__":
     flat_preds = torch.flatten(torch.hstack(pos_preds))
     pred_bed = pd.DataFrame.from_dict({'chr':chr_name, 'start':flat_indices, 'end':flat_indices+seq_length, 'pred':flat_preds})
     pred_bed.to_csv('output/chr1_positive.bed', sep='\t', index=None)
+
+    # Print sequences
+    fasta_file = '../data/reference/hg38.fa'
+    fasta = utils.fasta_data.FastaInterval(fasta_file=fasta_file, return_seq=True)
+    bed_file = pd.read_csv('output/chr1_positive.bed', sep='\t')
+    print(bed_file.head())
+
+    for i, row in bed_file.iterrows():
+        print(fasta(row['chr'], int(row['start']), int(row['end'])).upper())
     
