@@ -19,7 +19,8 @@ class BinaryDataModule(L.LightningDataModule):
         decoy_mul=1, 
         sequence_length=46,
         train_test_split=0.8, 
-        batch_size=32
+        batch_size=32,
+        smooth_labels=False
     ):
         super().__init__()
         self.data_path = data_path
@@ -29,6 +30,7 @@ class BinaryDataModule(L.LightningDataModule):
         self.sequence_length = sequence_length
         self.train_test_split = train_test_split
         self.batch_size = batch_size
+        self.smooth_labels = smooth_labels
 
     def setup(self, stage: str):
         # Select test/train dataset
@@ -45,15 +47,18 @@ class BinaryDataModule(L.LightningDataModule):
         decoys = decoys['seq'].values
         sequences = np.hstack([hits,decoys])
 
+        label_0 = 0.1 if self.smooth_labels else 0.0
+        label_1 = 0.9 if self.smooth_labels else 1.0
+
         labels = np.hstack([
-            np.ones(len(hits), dtype=int), 
-            np.zeros(len(decoys), dtype=int)
+            np.full(len(hits), label_1, dtype=np.float32),
+            np.full(len(decoys), label_0, dtype=np.float32)
         ])
+
         weights = np.hstack([
             np.full(len(hits), 1./len(hits)), 
             np.full(len(decoys), 1./len(decoys))
         ])
-        print(weights)
 
         self.dataset = datasets.SequenceDataset(sequences, labels)
 

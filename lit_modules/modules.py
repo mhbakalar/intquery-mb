@@ -35,7 +35,7 @@ class BinaryClassifier(pl.LightningModule):
     def logging(self, logits, target, loss, stage):
         # Logging to TensorBoard (if installed) by default
         pred = self.sigmoid(logits)
-        self.accuracy(torch.round(pred.squeeze()), target)
+        self.accuracy(torch.round(pred.squeeze()), torch.round(target))
         self.log(f'{stage}_acc', self.accuracy)
         self.log(f'{stage}_loss', loss)
 
