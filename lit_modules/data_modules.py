@@ -14,14 +14,16 @@ Binary classifier. Optionally, use scalar value as sampling weight.
 class BinaryDataModule(L.LightningDataModule):
     def __init__(self, 
         data_path, 
+        decoy_path=None,
         genomic_reference_file=None, 
-        decoy_mul=0, 
+        decoy_mul=1, 
         sequence_length=46,
-        train_test_split=1.0, 
+        train_test_split=0.8, 
         batch_size=32
     ):
         super().__init__()
         self.data_path = data_path
+        self.decoy_path = decoy_path
         self.genomic_reference_file = genomic_reference_file
         self.decoy_mul = decoy_mul
         self.sequence_length = sequence_length
@@ -32,28 +34,28 @@ class BinaryDataModule(L.LightningDataModule):
         # Select test/train dataset
         fname = stage + '.csv'
 
-        # Load the cryptic seq data
+        # Load the cryptic seq data and decoys
         sites = pd.read_csv(os.path.join(self.data_path, fname))
 
+        decoys = pd.read_csv(os.path.join(self.decoy_path, 'decoys_100k.csv'))
+        decoys = decoys.sample(n=len(sites)*self.decoy_mul, replace=True)
+
         # Cryptic sites data for training
-        sequences = sites['seq'].values
-        labels = (sites['norm_count'] > 0.01).astype(int)
-        #labels = np.ones(len(sites), dtype=int)
+        hits = sites['seq'].values
+        decoys = decoys['seq'].values
+        sequences = np.hstack([hits,decoys])
 
-        # Convert labels to one hot and build dataset
+        labels = np.hstack([
+            np.ones(len(hits), dtype=int), 
+            np.zeros(len(decoys), dtype=int)
+        ])
+        weights = np.hstack([
+            np.full(len(hits), 1./len(hits)), 
+            np.full(len(decoys), 1./len(decoys))
+        ])
+        print(weights)
+
         self.dataset = datasets.SequenceDataset(sequences, labels)
-
-        if self.decoy_mul > 0:
-            # Generate random decoy sequences and update dataset
-            n_decoys = len(sites)*self.decoy_mul
-            decoy_weight = 1. / n_decoys
-            decoy_label = 0
-            decoy_dataset = datasets.DecoyDataset(
-                fasta_file=self.genomic_reference_file,
-                n_decoys=n_decoys,
-                length=self.sequence_length,
-                label=decoy_label)
-            self.dataset = torch.utils.data.ConcatDataset([self.dataset, decoy_dataset])
 
         if stage == 'fit':
             # Test and train data split
@@ -61,17 +63,27 @@ class BinaryDataModule(L.LightningDataModule):
             test_size = len(self.dataset) - train_size
             self.train_dataset, self.val_dataset = torch.utils.data.random_split(self.dataset, [train_size, test_size])
 
+            # Weighted random sampler for upsampling minority class for training
+            train_sample_weights = weights[self.train_dataset.indices]
+            self.train_sampler = torch.utils.data.WeightedRandomSampler(train_sample_weights, len(train_sample_weights), replacement=True)
+
         elif stage == 'test':
             self.test_dataset = self.val_dataset
 
+        elif stage == 'predict':
+            self.pred_dataset = self.dataset
+
     def train_dataloader(self):
-        return torch.utils.data.DataLoader(self.train_dataset, shuffle=True, batch_size=self.batch_size)
+        return torch.utils.data.DataLoader(self.train_dataset, batch_size=self.batch_size, sampler=self.train_sampler)
 
     def val_dataloader(self):
         return torch.utils.data.DataLoader(self.val_dataset, batch_size=self.batch_size)
     
     def test_dataloader(self):
         return torch.utils.data.DataLoader(self.test_dataset, batch_size=self.batch_size)
+    
+    def predict_dataloader(self):
+        return torch.utils.data.DataLoader(self.pred_dataset, batch_size=self.batch_size)
 
 '''
 Multi class data module. Currently designed for three class use – decoy, low, high activity.
@@ -85,7 +97,7 @@ class MulticlassDataModule(L.LightningDataModule):
         decoy_mul=0, 
         n_classes=3, 
         sequence_length=46,
-        train_test_split=1.0, 
+        train_test_split=0.8, 
         batch_size=32
     ):
         super().__init__()
@@ -147,11 +159,11 @@ class MulticlassDataModule(L.LightningDataModule):
             self.train_dataset, self.val_dataset = torch.utils.data.random_split(self.dataset, [train_size, test_size])
 
             # Weighted random sampler for upsampling minority class for training
-            #train_sample_weights = self.sample_weights[self.train_dataset.indices]
-            #self.train_sampler = torch.utils.data.WeightedRandomSampler(train_sample_weights, len(train_sample_weights), replacement=True)
+            train_sample_weights = self.sample_weights[self.train_dataset.indices]
+            self.train_sampler = torch.utils.data.WeightedRandomSampler(train_sample_weights, len(train_sample_weights), replacement=True)
 
             # Disable weighted sampling
-            self.train_sampler = torch.utils.data.RandomSampler(self.train_dataset)
+            #self.train_sampler = torch.utils.data.RandomSampler(self.train_dataset)
 
         elif stage == 'test':
             self.test_dataset = self.val_dataset
