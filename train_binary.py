@@ -57,7 +57,7 @@ if __name__ == "__main__":
     preds = torch.vstack([batch[0] for batch in batch_preds]).flatten()
     labels = torch.hstack([batch[1] for batch in batch_preds])
     df = pd.DataFrame({'label':labels, 'pred':preds})
-    df[df['label'] == 0.9]['pred'].hist()
+    df[df['label'] == 0.9]['pred'].hist(bins=20)
     plt.show()
 
     # Evaluate on chromosome 1
@@ -72,7 +72,7 @@ if __name__ == "__main__":
     pos_preds = []
     for batch in batch_preds:
         preds, inds = batch[0], batch[1]
-        hits = torch.nonzero(preds.squeeze() > 0.8)
+        hits = torch.nonzero(preds.squeeze() > 0.9)
         pos_preds.append(preds[hits].flatten())
         pos_indices.append(inds[hits].flatten())
     
@@ -90,3 +90,9 @@ if __name__ == "__main__":
     for i, row in bed_file.iterrows():
         print(fasta(row['chr'], int(row['start']), int(row['end'])).upper())
     
+    dl = pred_data_module.predict_dataloader()
+    for el in dl:
+        print(el)
+        break
+
+    utils.fasta_data.str_to_one_hot('NN')

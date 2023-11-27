@@ -20,38 +20,6 @@ class SequenceDataset(Dataset):
     return one_hot, label
 
 '''
-Dataset for decoy sequences from a genomic reference file
-'''
-class DecoyDataset(Dataset):
-  def __init__(self, fasta_file, n_decoys, length, label):
-    self.n_decoys = n_decoys
-    self.length = length
-    self.label = label
-    # Open fasta reference file to draw decoys from
-    self.fasta = utils.fasta_data.FastaInterval(fasta_file=fasta_file)
-
-    # Draw samples from canonical chromosomes only
-    chromosomes = np.append(np.arange(1,22).astype(str), ['X','Y'])
-    chromosomes = np.char.add('chr', chromosomes)
-
-    self.coordinates = []
-    for i in range(0, n_decoys):
-        chr_name = random.choice(chromosomes)
-        chromosome = self.fasta.seqs[chr_name]
-        start = random.randint(0, len(chromosome)-self.length)
-        end = start + self.length
-        self.coordinates.append((chr_name, start, end))
-
-  def __len__(self):
-    return len(self.coordinates)
-
-  def __getitem__(self, idx):
-    chr_name, start, end = self.coordinates[idx]
-    one_hot = self.fasta(chr_name, start, end)
-    label = self.label
-    return one_hot, label
-
-'''
 Return genomic intervals using fasta reference and bed file coordinates. Requires polar.
 '''
 class GenomeIntervalDataset(Dataset):
@@ -128,7 +96,7 @@ class GenomeBoxcarDataset(Dataset):
     
     # Collect fasta index information
     #self.length = len(self.fasta.seqs[self.chr]) - window_length
-    self.length = 1000000
+    self.length = 5000000
     self.start = 0
 
     self.return_augs = return_augs
@@ -139,5 +107,11 @@ class GenomeBoxcarDataset(Dataset):
   def __getitem__(self, ind):
     chr_name, start, end = (self.chr, ind, ind + self.window_length)
     one_hot = self.fasta(chr_name, start, end, return_augs = self.return_augs)
+
+    # Set the dinculeotide to NN
+    dn_left = int(self.window_length/2)-1
+    dn_one_hot = utils.fasta_data.str_to_one_hot('NN')
+    one_hot[dn_left:dn_left+2,:] = dn_one_hot
+
     return one_hot, ind
 
