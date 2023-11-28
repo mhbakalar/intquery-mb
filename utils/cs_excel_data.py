@@ -1,7 +1,8 @@
 import pandas as pd
 import os
+import numpy as np
 
-def extract_excel_cs_data(input_file, sheet_names, output_dir, output_name, threshold, dn_exclusion=[]):
+def extract_excel_cs_data(input_file, sheet_names, output_dir, output_name, threshold, normalize=False, dn_exclusion=[]):
     # Load data from cryptic seq experiment
     sites_xl = pd.ExcelFile(input_file)
     sheets = []
@@ -15,10 +16,13 @@ def extract_excel_cs_data(input_file, sheet_names, output_dir, output_name, thre
     # Sum count at identical sites
     sites = sites.groupby(['seq'], as_index=False).sum(numeric_only=False)
 
-    # Noramlize by on target count
-    UMI_norm_factor = sites[sites['chrom'].str.contains('PL312')]['count'].mean()
-    sites['count'] = sites['count']/UMI_norm_factor
-    sites = sites[sites['count'] > threshold]
+    # Normalize by on target count
+    if normalize:
+        normalizer = sites[sites['chrom'].str.contains('PL312')]['count'].mean()
+    else:
+        normalizer = 1
+
+    sites['count'] = (sites['count']/normalizer)
 
     # Exclude dinucleotides if necessary
     sites = sites[~sites['genome_dinucleotide'].isin(dn_exclusion)]
@@ -41,7 +45,7 @@ def extract_excel_cs_data(input_file, sheet_names, output_dir, output_name, thre
     # Use both left and right half sites as data inputs
     #output_data = pd.concat([pd.DataFrame({"seq": sites[key], "norm_count": sites['count']}) for key in ['left_full', 'right_full']]).reset_index()
     
-    output_data = pd.DataFrame({"seq": sites['full_nn'], "norm_count": sites['count']})  # Train with original data
+    output_data = pd.DataFrame({"seq": sites['full_nn'], "value": sites['count']})  # Train with original data
 
     # Save to file
     output_data.to_csv(os.path.join(output_dir, output_name), index=False)

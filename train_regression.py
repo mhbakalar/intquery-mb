@@ -4,6 +4,7 @@ import numpy as np
 import torch
 import lightning.pytorch as pl
 from pyfaidx import Fasta
+import utils.fasta_data
 
 # Local cryptic module imports
 from lit_modules import data_modules, modules
@@ -12,45 +13,43 @@ from models import models
 if __name__ == "__main__":
     # Set parameters (add CLI interface soon)
     data_path = './data/TB000208a'
+    decoy_path = './data/decoys'
     genomic_reference_file = '../data/reference/hg38.fa'
-    n_classes = 3
+    bed_output_file = './output/chr1_positive.bed'
     seq_length = 46
-    vocab_size = 4
+    vocab_size = 5
     input_size = seq_length*vocab_size
-    hidden_size = 256
-    n_hidden = 2
-    train_test_split = 1.0
-    batch_size = 64
-    threshold = 0.01
+    hidden_size = 2000
+    n_hidden = 1
+    train_test_split = 0.8
+    batch_size = 128
     decoy_mul = 1
+    dropout = 0.5
+    lr = 0.001
 
     # Build the data module
-    data_module = data_modules.MulticlassDataModule(
+    data_module = data_modules.NumericDataModule(
         data_path,
-        threshold=threshold,
-        n_classes=n_classes,
+        decoy_path=decoy_path,
         decoy_mul=decoy_mul,
         sequence_length=seq_length,
         genomic_reference_file=genomic_reference_file,
         train_test_split=train_test_split,
-        batch_size=batch_size)
+        batch_size=batch_size,
+        log_transform=True)
 
     # Build model
-    lit_model = modules.Classifier(
+    lit_model = modules.Regression(
         input_size=input_size,
         hidden_size=hidden_size,
-        n_classes=n_classes,
         n_hidden=n_hidden,
-        dropout=0.25,
-        lr=0.001)
+        dropout=dropout,
+        lr=lr)
 
     # train the model
     tb_logger = pl.loggers.TensorBoardLogger(save_dir="lightning_logs/")
-    trainer = pl.Trainer(max_epochs=5, logger=tb_logger, default_root_dir='.')
+    trainer = pl.Trainer(max_epochs=20, logger=tb_logger, default_root_dir='.')
     trainer.fit(lit_model, data_module)
-
-    # test the model
-    trainer.test(lit_model, data_module)
 
     # Evaluate on chromosome 1
     # Fast prediction code. Currently runs on chrom 1
@@ -58,17 +57,20 @@ if __name__ == "__main__":
     chr_name = chromosomes[0]
     pred_data_module = data_modules.GenomeDataModule(genomic_reference_file, chr=chr_name, batch_size=batch_size, num_workers=0)
     batch_preds = trainer.predict(lit_model, pred_data_module)
-    
+
     # Construct bed file for positive predictions
     pos_indices = []
     pos_preds = []
     for batch in batch_preds:
-        preds, indices = batch[0], batch[1]
-        pos_indices.append(indices[torch.nonzero(preds)])
-        pos_preds.append(preds[torch.nonzero(preds)])
+        preds, inds = batch[0], batch[1]
+        hits = torch.nonzero(preds.squeeze() > 5)
+        if len(hits) > 0:
+            pos_preds.append(preds[hits].flatten())
+            pos_indices.append(inds[hits].flatten())
     
-    flat_indices = torch.flatten(torch.vstack(pos_indices))
-    flat_preds = torch.flatten(torch.vstack(pos_preds))
+    flat_indices = torch.flatten(torch.hstack(pos_indices))
+    flat_preds = torch.flatten(torch.hstack(pos_preds))
+
+    # Save predictions
     pred_bed = pd.DataFrame.from_dict({'chr':chr_name, 'start':flat_indices, 'end':flat_indices+seq_length, 'pred':flat_preds})
-    pred_bed.to_csv('output/chr1_positive.bed', sep='\t', index=None)
-    
+    pred_bed.to_csv(bed_output_file, sep='\t', index=None)
