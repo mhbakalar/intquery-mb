@@ -4,7 +4,7 @@ import numpy as np
 import torch
 import lightning.pytorch as pl
 from pyfaidx import Fasta
-import utils.fasta_data
+import argparse
 
 # Local cryptic module imports
 from lit_modules import data_modules, modules
@@ -12,10 +12,16 @@ from models import models
 
 if __name__ == "__main__":
     # Set parameters (add CLI interface soon)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', '--chrom')
+    parser.add_argument('-o', '--outfile')
+
+    args = parser.parse_args()
+
     data_path = './data/TB000208a'
     decoy_path = './data/decoys'
     genomic_reference_file = '../data/reference/hg38.fa'
-    bed_output_file = './output/chr1_positive.bed'
+    bed_output_file = args.outfile
     seq_length = 46
     vocab_size = 5
     input_size = seq_length*vocab_size
@@ -26,6 +32,10 @@ if __name__ == "__main__":
     decoy_mul = 1
     dropout = 0.5
     lr = 0.001
+    epochs = 15
+    
+    # Prediction parameters
+    chr_name = args.chrom
 
     # Build the data module
     data_module = data_modules.NumericDataModule(
@@ -48,14 +58,11 @@ if __name__ == "__main__":
 
     # train the model
     tb_logger = pl.loggers.TensorBoardLogger(save_dir="lightning_logs/")
-    trainer = pl.Trainer(max_epochs=20, logger=tb_logger, default_root_dir='.')
+    trainer = pl.Trainer(max_epochs=epochs, logger=tb_logger, default_root_dir='.')
     trainer.fit(lit_model, data_module)
 
-    # Evaluate on chromosome 1
-    # Fast prediction code. Currently runs on chrom 1
-    chromosomes = list(Fasta(genomic_reference_file).keys())
-    chr_name = chromosomes[0]
-    pred_data_module = data_modules.GenomeDataModule(genomic_reference_file, chr=chr_name, batch_size=batch_size, num_workers=0)
+    # Fast prediction code.
+    pred_data_module = data_modules.GenomeDataModule(genomic_reference_file, chr=chr_name, batch_size=batch_size, num_workers=10)
     batch_preds = trainer.predict(lit_model, pred_data_module)
 
     # Construct bed file for positive predictions
