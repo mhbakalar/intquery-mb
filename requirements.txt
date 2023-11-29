@@ -6,3 +6,4 @@ torch
 torchmetrics
 tensorboard
 ray "[data,train,tune,serve]"
+jsonargparse "[signatures]"

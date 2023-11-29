@@ -121,8 +121,9 @@ class NumericDataModule(L.LightningDataModule):
 
         # Load the cryptic seq data and decoys
         sites = pd.read_csv(os.path.join(self.data_path, fname))
+        decoys = pd.read_csv(os.path.join(self.decoy_path, fname))
 
-        decoys = pd.read_csv(os.path.join(self.decoy_path, 'decoys_100k.csv'))
+        # Sample decoys using decoy_mul factor
         decoys = decoys.sample(n=len(sites)*self.decoy_mul, replace=True)
 
         # Cryptic sites data for training

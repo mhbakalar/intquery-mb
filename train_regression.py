@@ -18,10 +18,12 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    bed_output_file = args.outfile
+    
     data_path = './data/TB000208a'
     decoy_path = './data/decoys'
     genomic_reference_file = '../data/reference/hg38.fa'
-    bed_output_file = args.outfile
+    
     seq_length = 46
     vocab_size = 5
     input_size = seq_length*vocab_size
