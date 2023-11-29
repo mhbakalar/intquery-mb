@@ -11,6 +11,7 @@ Binary classifier
 class BinaryClassifier(pl.LightningModule):
     def __init__(self, input_size, hidden_size, n_hidden, dropout=0.5, lr=1e-3):
         super().__init__()
+        self.save_hyperparameters()
 
         self.input_size = input_size
         self.hidden_size = hidden_size
@@ -78,6 +79,7 @@ class BinaryClassifier(pl.LightningModule):
 class Regression(pl.LightningModule):
     def __init__(self, input_size, hidden_size, n_hidden, dropout=0.5, lr=1e-3):
         super().__init__()
+        self.save_hyperparameters()
 
         self.input_size = input_size
         self.hidden_size = hidden_size

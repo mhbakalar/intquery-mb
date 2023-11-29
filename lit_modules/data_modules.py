@@ -106,6 +106,8 @@ class NumericDataModule(L.LightningDataModule):
         log_transform=False
     ):
         super().__init__()
+        self.save_hyperparameters()
+        
         self.data_path = data_path
         self.decoy_path = decoy_path
         self.genomic_reference_file = genomic_reference_file
@@ -171,6 +173,8 @@ Genome scanning data module.
 class GenomeDataModule(L.LightningDataModule):
     def __init__(self, data_file, chr, num_workers=0, batch_size=32):
         super().__init__()
+        self.save_hyperparameters()
+
         self.data_file = data_file
         self.chr= chr
         self.num_workers = num_workers
