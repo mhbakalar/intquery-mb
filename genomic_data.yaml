@@ -1,0 +1,7 @@
+# lightning.pytorch==2.1.0
+class_path: lit_modules.data_modules.GenomeDataModule
+init_args:
+  data_file: ../data/reference/hg38.fa
+  chr: chr1
+  num_workers: 0
+  batch_size: 128
