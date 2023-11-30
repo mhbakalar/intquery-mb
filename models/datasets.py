@@ -71,7 +71,7 @@ class GenomeBoxcarDataset(Dataset):
   def __init__(
     self,
     fasta_file,
-    chr,
+    chr_name = None,
     filter_df_fn = utils.fasta_data.identity,
     window_length = 46,
     context_length = None,
@@ -83,7 +83,7 @@ class GenomeBoxcarDataset(Dataset):
   ):
     super().__init__()
     self.window_length = window_length
-    self.chr = chr
+    self.chr_name = chr_name
 
     self.fasta = utils.fasta_data.FastaInterval(
       fasta_file = fasta_file,
