@@ -1,0 +1,16 @@
+# lightning.pytorch==2.1.0
+trainer:
+  callbacks:
+    class_path: BedWriter
+    init_args:
+      output_dir: output/chr1
+      write_interval: batch
+      chr_name: chr1
+      seq_length: 46
+data:
+  class_path: lit_modules.data_modules.GenomeDataModule
+  init_args:
+    data_file: ../data/reference/hg38.fa
+    chr: chr1
+    num_workers: 10
+    batch_size: 128

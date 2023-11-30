@@ -1,4 +1,7 @@
 # main.py
+import os
+import torch
+import pandas as pd
 from lightning.pytorch.cli import LightningCLI
 from lightning.pytorch.callbacks import BasePredictionWriter
 
@@ -6,34 +9,33 @@ from lit_modules import data_modules, modules
 
 class BedWriter(BasePredictionWriter):
 
-    def __init__(self, output_dir, write_interval):
+    def __init__(self, output_dir, chr_name, seq_length, write_interval):
         super().__init__(write_interval)
         self.output_dir = output_dir
+        self.chr_name = chr_name
+        self.seq_length = seq_length
 
     def write_on_batch_end(
         self, trainer, pl_module, prediction, batch_indices, batch, batch_idx, dataloader_idx
     ):
-        torch.save(prediction, os.path.join(self.output_dir, dataloader_idx, f"{batch_idx}.pt"))
-        
+        save_path = os.path.join(self.output_dir, str(dataloader_idx))
+        os.makedirs(save_path, exist_ok = True)
+        # torch.save(prediction, save_path, f"{batch_idx}.pt")
+
         # Construct path for output file
         output_file = os.path.join(self.output_dir, "predictions.bed")
 
         # Construct bed file for positive predictions
         save_data = []  # Use a list of tuples instead of separate lists
-        for batch in predictions:
-            values, inds = batch[0], batch[1]
-            hits = torch.nonzero(preds.squeeze() > 1)
-            if len(hits) > 0:
-                save_data.extend(zip(values[hits].flatten(), inds[hits].flatten()))
+        preds, inds = prediction[0], prediction[1]
+        hits = torch.nonzero(preds.squeeze())
 
-        # Unpack the list of tuples into separate lists if needed
-        save_preds, save_inds = zip(*save_data)
-        inds = torch.flatten(torch.hstack(pos_indices))
-        preds = torch.flatten(torch.hstack(pos_preds))
+        preds = torch.flatten(preds[hits]).cpu()
+        inds = torch.flatten(inds[hits]).cpu()
 
         # Save predictions
-        pred_bed = pd.DataFrame.from_dict({'chr':chr_name, 'start':inds, 'end':inds+seq_length, 'pred':preds})
-        
+        pred_bed = pd.DataFrame.from_dict({'chr':self.chr_name, 'start':inds, 'end':inds+self.seq_length, 'pred':preds})
+
         pred_bed.to_csv(
             output_file, 
             sep='\t', 
