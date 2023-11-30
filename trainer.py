@@ -15,9 +15,7 @@ class BedWriter(BasePredictionWriter):
         self.chr_name = chr_name
         self.seq_length = seq_length
 
-    def write_on_batch_end(
-        self, trainer, pl_module, prediction, batch_indices, batch, batch_idx, dataloader_idx
-    ):
+    def write_on_epoch_end(self, trainer, pl_module, predictions, batch_indices):
         save_path = os.path.join(self.output_dir, str(dataloader_idx))
         os.makedirs(save_path, exist_ok = True)
         # torch.save(prediction, save_path, f"{batch_idx}.pt")

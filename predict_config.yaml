@@ -4,9 +4,7 @@ trainer:
     class_path: BedWriter
     init_args:
       output_dir: output/chr1
-      write_interval: batch
-      chr_name: chr1
-      seq_length: 46
+      write_interval: epoch
 data:
   class_path: lit_modules.data_modules.GenomeDataModule
   init_args:

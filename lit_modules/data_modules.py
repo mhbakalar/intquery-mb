@@ -106,8 +106,7 @@ class NumericDataModule(L.LightningDataModule):
         log_transform=False
     ):
         super().__init__()
-        self.save_hyperparameters()
-        
+
         self.data_path = data_path
         self.decoy_path = decoy_path
         self.genomic_reference_file = genomic_reference_file
@@ -150,7 +149,7 @@ class NumericDataModule(L.LightningDataModule):
             self.train_dataset, self.val_dataset = torch.utils.data.random_split(self.dataset, [train_size, test_size])
 
         elif stage == 'test':
-            self.test_dataset = self.val_dataset
+            self.test_dataset = self.dataset
 
         elif stage == 'predict':
             self.pred_dataset = self.dataset
@@ -171,21 +170,21 @@ class NumericDataModule(L.LightningDataModule):
 Genome scanning data module.
 '''
 class GenomeDataModule(L.LightningDataModule):
-    def __init__(self, data_file, chr, num_workers=0, batch_size=32):
+    def __init__(self, data_file, chr, seq_length=46, num_workers=0, batch_size=32):
         super().__init__()
-        self.save_hyperparameters()
 
         self.data_file = data_file
-        self.chr= chr
+        self.chr = chr
         self.num_workers = num_workers
         self.batch_size = batch_size
+        self.seq_length = seq_length
 
     def setup(self, stage: str):
         if stage == 'predict':
             self.pred_dataset = datasets.GenomeBoxcarDataset(fasta_file=self.data_file, 
                                                                     chr=self.chr,
-                                                                    window_length=46,
-                                                                    read_ahead=self.batch_size*46)
+                                                                    window_length=self.seq_length,
+                                                                    read_ahead=self.batch_size*self.seq_length)
 
     def predict_dataloader(self):
         return torch.utils.data.DataLoader(self.pred_dataset, num_workers=self.num_workers, pin_memory=True, batch_size=self.batch_size)
