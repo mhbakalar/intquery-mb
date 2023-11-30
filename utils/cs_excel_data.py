@@ -2,7 +2,7 @@ import pandas as pd
 import os
 import numpy as np
 
-def extract_excel_cs_data(input_file, sheet_names, output_dir, output_name, threshold, normalize=False, dn_exclusion=[]):
+def extract_excel_cs_data(input_file, sheet_names, output_dir, output_name, threshold, normalize=False, dn_exclusion=[], append=False):
     # Load data from cryptic seq experiment
     sites_xl = pd.ExcelFile(input_file)
     sheets = []
@@ -48,6 +48,9 @@ def extract_excel_cs_data(input_file, sheet_names, output_dir, output_name, thre
     output_data = pd.DataFrame({"seq": sites['full_nn'], "value": sites['count']})  # Train with original data
 
     # Save to file
-    output_data.to_csv(os.path.join(output_dir, output_name), index=False)
+    if append:
+        output_data.to_csv(os.path.join(output_dir, output_name), index=False, mode='a', header=False)
+    else:   
+        output_data.to_csv(os.path.join(output_dir, output_name), index=False)
 
     return sites
