@@ -16,9 +16,6 @@ class BedWriter(BasePredictionWriter):
         self.seq_length = seq_length
 
     def write_on_epoch_end(self, trainer, pl_module, predictions, batch_indices):
-        # Construct path for output file
-        output_file = os.path.join(self.output_dir, f"{self.chr_name}.bed")
-
         # Construct bed file for positive predictions
         save_data = []  # Use a list of tuples instead of separate lists
         pos_indices = []
@@ -28,28 +25,25 @@ class BedWriter(BasePredictionWriter):
             hits = torch.nonzero(preds.squeeze() > 1.0)
             pos_preds.append(preds[hits].flatten())
             pos_indices.append(inds[hits].flatten())
-    
+
         inds = torch.flatten(torch.hstack(pos_indices))
         preds = torch.flatten(torch.hstack(pos_preds))
 
         # Save predictions
+        output_file = os.path.join(self.output_dir, f"{self.chr_name}.bed")
         pred_bed = pd.DataFrame.from_dict({'chr':self.chr_name, 'start':inds, 'end':inds+self.seq_length, 'pred':preds})
 
         pred_bed.to_csv(
-            output_file, 
-            sep='\t', 
-            index=None, 
+            output_file,
+            sep='\t',
+            index=None,
             header=not os.path.exists(output_file)
         )
 
-        torch.save(predictions, os.path.join(self.output_dir, "predictions.pt"))
-
-class CLI(LightningCLI):
-    def add_arguments_to_parser(self, parser):
-        parser.link_arguments('data.chr_name', 'trainer.callbacks.init_args.chr_name')
+        torch.save(predictions, os.path.join(self.output_dir, f"{self.chr_name}_predictions.pt"))
 
 def cli_main():
-    cli = CLI(modules.Regression)
+    cli = LightningCLI(modules.Regression)
     # note: don't call fit!!
 
 
