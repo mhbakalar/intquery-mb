@@ -16,20 +16,21 @@ class BedWriter(BasePredictionWriter):
         self.seq_length = seq_length
 
     def write_on_epoch_end(self, trainer, pl_module, predictions, batch_indices):
-        save_path = os.path.join(self.output_dir, str(dataloader_idx))
-        os.makedirs(save_path, exist_ok = True)
-        # torch.save(prediction, save_path, f"{batch_idx}.pt")
-
         # Construct path for output file
-        output_file = os.path.join(self.output_dir, "predictions.bed")
+        output_file = os.path.join(self.output_dir, f"{self.chr_name}.bed")
 
         # Construct bed file for positive predictions
         save_data = []  # Use a list of tuples instead of separate lists
-        preds, inds = prediction[0], prediction[1]
-        hits = torch.nonzero(preds.squeeze())
-
-        preds = torch.flatten(preds[hits]).cpu()
-        inds = torch.flatten(inds[hits]).cpu()
+        pos_indices = []
+        pos_preds = []
+        for batch in predictions:
+            preds, inds = batch[0], batch[1]
+            hits = torch.nonzero(preds.squeeze() > 1.0)
+            pos_preds.append(preds[hits].flatten())
+            pos_indices.append(inds[hits].flatten())
+    
+        inds = torch.flatten(torch.hstack(pos_indices))
+        preds = torch.flatten(torch.hstack(pos_preds))
 
         # Save predictions
         pred_bed = pd.DataFrame.from_dict({'chr':self.chr_name, 'start':inds, 'end':inds+self.seq_length, 'pred':preds})
@@ -38,16 +39,17 @@ class BedWriter(BasePredictionWriter):
             output_file, 
             sep='\t', 
             index=None, 
-            mode='a', 
             header=not os.path.exists(output_file)
         )
 
-    def write_on_epoch_end(self, trainer, pl_module, predictions, batch_indices):
         torch.save(predictions, os.path.join(self.output_dir, "predictions.pt"))
 
+class CLI(LightningCLI):
+    def add_arguments_to_parser(self, parser):
+        parser.link_arguments('data.chr_name', 'trainer.callbacks.init_args.chr_name')
 
 def cli_main():
-    cli = LightningCLI(modules.Regression)
+    cli = CLI(modules.Regression)
     # note: don't call fit!!
 
 
