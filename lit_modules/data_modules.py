@@ -178,7 +178,9 @@ class GenomeDataModule(L.LightningDataModule):
         self.num_workers = num_workers
         self.batch_size = batch_size
         self.seq_length = seq_length
-        self.rc_aug = (strand == '-')
+        self.rc_aug = False
+        self.strand = strand
+        print("Strand: ", strand)
 
     def setup(self, stage: str):
         if stage == 'predict':
