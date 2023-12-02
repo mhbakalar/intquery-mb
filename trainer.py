@@ -9,11 +9,12 @@ from lit_modules import data_modules, modules
 
 class BedWriter(BasePredictionWriter):
 
-    def __init__(self, output_dir, chr_name, seq_length, write_interval):
+    def __init__(self, output_dir, chr_name, seq_length, strand, write_interval):
         super().__init__(write_interval)
         self.output_dir = output_dir
         self.chr_name = chr_name
         self.seq_length = seq_length
+        self.strand = strand
 
     def write_on_epoch_end(self, trainer, pl_module, predictions, batch_indices):
         # Construct bed file for positive predictions
@@ -31,13 +32,14 @@ class BedWriter(BasePredictionWriter):
 
         # Save predictions
         output_file = os.path.join(self.output_dir, f"{self.chr_name}.bed")
-        pred_bed = pd.DataFrame.from_dict({'chr':self.chr_name, 'start':inds, 'end':inds+self.seq_length, 'pred':preds})
+        pred_bed = pd.DataFrame.from_dict({'chr':self.chr_name, 'start':inds, 'end':inds+self.seq_length, 'pred':preds, 'strand':self.strand})
 
         pred_bed.to_csv(
             output_file,
             sep='\t',
             index=None,
-            header=not os.path.exists(output_file)
+            mode='a',
+            header=not os.path.exists(output_file),
         )
 
         torch.save(predictions, os.path.join(self.output_dir, f"{self.chr_name}_predictions.pt"))
