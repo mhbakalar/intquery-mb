@@ -170,20 +170,22 @@ class NumericDataModule(L.LightningDataModule):
 Genome scanning data module.
 '''
 class GenomeDataModule(L.LightningDataModule):
-    def __init__(self, data_file, chr, seq_length=46, num_workers=0, batch_size=32):
+    def __init__(self, data_file, chr_name, seq_length=46, strand='+', num_workers=0, batch_size=32):
         super().__init__()
 
         self.data_file = data_file
-        self.chr = chr
+        self.chr_name = chr_name
         self.num_workers = num_workers
         self.batch_size = batch_size
         self.seq_length = seq_length
+        self.rc_aug = (strand == '-')
 
     def setup(self, stage: str):
         if stage == 'predict':
             self.pred_dataset = datasets.GenomeBoxcarDataset(fasta_file=self.data_file, 
-                                                                    chr=self.chr,
+                                                                    chr_name=self.chr_name,
                                                                     window_length=self.seq_length,
+                                                                    rc_aug=self.rc_aug,
                                                                     read_ahead=self.batch_size*self.seq_length)
 
     def predict_dataloader(self):

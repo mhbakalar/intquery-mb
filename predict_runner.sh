@@ -1,28 +1,25 @@
 #!/bin/bash
-# Predict positive strand: predict_runner.sh +
-# Predict negative strand: predict_runner.sh -
+# Full commmand example:
+# python trainer.py predict --ckpt_path lightning_logs/version_0/checkpoints/epoch\=19-step\=10060.ckpt --config predict_config.yaml --data.chr_name chr21
 
-# Check if the number of arguments is correct
-if [ "$#" -ne 1 ]; then
-    echo "Usage: $0 <STRAND>"
-    exit 1
-fi
+CKPT_PATH="$1"
+PREDICT_CONFIG="$2"
 
-# Get the value of the STRAND argument
-STRAND="$1"
+POS="+"
+NEG="-"
 
-CKPT_PATH="lightning_logs/version_0/checkpoints/epoch\=19-step\=10060.ckpt"
-CONFIG_FILE="predict_config.yaml"
-
-for CHR_NAME in {1..4}; do
+for CHR_NAME in {21..22}; do
     CHR_NAME="chr$CHR_NAME"
-    COMMAND="python trainer.py predict --ckpt_path $CKPT_PATH --config $CONFIG_FILE --data.chr_name $CHR_NAME --trainer.callbacks.init_args.chr_name $CHR_NAME --data.init_args.strand $STRAND --trainer.callbacks.init_args.strand $STRAND"
+    COMMAND_POS="python trainer.py predict --ckpt_path $CKPT_PATH --config $PREDICT_CONFIG --data.chr_name $CHR_NAME --data.strand $POS"
+    COMMAND_NEG="python trainer.py predict --ckpt_path $CKPT_PATH --config $PREDICT_CONFIG --data.chr_name $CHR_NAME --data.strand $NEG"
 
-    echo "Executing command for $CHR_NAME($STRAND):"
-    echo "$COMMAND"
+    echo "Executing command for $CHR_NAME($POS):"
+    echo "$COMMAND_POS"
+    eval "$COMMAND_POS"
 
-    # Uncomment the line below to execute the command
-    eval "$COMMAND"
+    echo "Executing command for $CHR_NAME($NEG):"
+    echo "$COMMAND_NEG"
+    eval "$COMMAND_NEG"
 
     echo "--------------------------------------"
 done

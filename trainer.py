@@ -9,14 +9,17 @@ from lit_modules import data_modules, modules
 
 class BedWriter(BasePredictionWriter):
 
-    def __init__(self, output_dir, chr_name, seq_length, strand, write_interval):
+    def __init__(self, output_dir, strand, write_interval):
         super().__init__(write_interval)
         self.output_dir = output_dir
-        self.chr_name = chr_name
-        self.seq_length = seq_length
         self.strand = strand
 
     def write_on_epoch_end(self, trainer, pl_module, predictions, batch_indices):
+        # Parameters
+        chr_name = trainer.datamodule.chr_name
+        seq_length = trainer.datamodule.seq_length
+        strand = trainer.datamodule.strand
+
         # Construct bed file for positive predictions
         save_data = []  # Use a list of tuples instead of separate lists
         pos_indices = []
@@ -31,8 +34,8 @@ class BedWriter(BasePredictionWriter):
         preds = torch.flatten(torch.hstack(pos_preds))
 
         # Save predictions
-        output_file = os.path.join(self.output_dir, f"{self.chr_name}.bed")
-        pred_bed = pd.DataFrame.from_dict({'chr':self.chr_name, 'start':inds, 'end':inds+self.seq_length, 'pred':preds, 'strand':self.strand})
+        output_file = os.path.join(self.output_dir, f"{chr_name}.bed")
+        pred_bed = pd.DataFrame.from_dict({'chr':chr_name, 'start':inds, 'end':inds+seq_length, 'pred':preds, 'strand':strand})
 
         pred_bed.to_csv(
             output_file,
@@ -41,9 +44,10 @@ class BedWriter(BasePredictionWriter):
             mode='a',
             header=not os.path.exists(output_file),
         )
-
-        torch.save(predictions, os.path.join(self.output_dir, f"{self.chr_name}_predictions.pt"))
-
+        
+        # Uncomment to save all predictions (takes up lots of disk space!)
+        # torch.save(predictions, os.path.join(self.output_dir, f"{chr_name}_predictions.pt"))
+    
 def cli_main():
     cli = LightningCLI(modules.Regression)
     # note: don't call fit!!

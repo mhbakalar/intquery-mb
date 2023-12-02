@@ -150,8 +150,7 @@ class FastaInterval():
 
     seq = ('.' * left_padding) + str(chromosome[start:end]) + ('.' * right_padding)
 
-
-    should_rc_aug = self.rc_aug and coin_flip()
+    should_rc_aug = self.rc_aug
 
     if self.return_seq:
       return seq
