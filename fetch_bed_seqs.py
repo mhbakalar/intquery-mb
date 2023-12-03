@@ -5,7 +5,7 @@ import utils.fasta_data
 
 fasta_file = '../data/reference/hg38.fa'
 fasta = utils.fasta_data.FastaInterval(fasta_file=fasta_file, return_seq=True)
-bed_file = pd.read_csv('output/chr1.bed', sep='\t')
+bed_file = pd.read_csv('output/chr3.bed', sep='\t')
 print(bed_file.head())
 
 seqs = []

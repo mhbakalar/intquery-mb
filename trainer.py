@@ -9,18 +9,15 @@ from lit_modules import data_modules, modules
 
 class BedWriter(BasePredictionWriter):
 
-    def __init__(self, output_dir, chr_name, seq_length, strand, write_interval):
+    def __init__(self, output_dir, write_interval):
         super().__init__(write_interval)
         self.output_dir = output_dir
-        self.chr_name = chr_name
-        self.seq_length = seq_length
-        self.strand = strand
 
     def write_on_epoch_end(self, trainer, pl_module, predictions, batch_indices):
         # Parameters
-        # chr_name = trainer.datamodule.chr_name
-        # seq_length = trainer.datamodule.seq_length
-        # strand = trainer.datamodule.strand
+        self.chr_name = trainer.datamodule.chr_name
+        self.seq_length = trainer.datamodule.seq_length
+        self.strand = trainer.datamodule.strand
 
         # Construct bed file for positive predictions
         save_data = []  # Use a list of tuples instead of separate lists
