@@ -3,14 +3,18 @@ trainer:
   callbacks:
     class_path: BedWriter
     init_args:
-      output_dir: output/chr1
+      output_dir: output
       write_interval: epoch
       seq_length: 46
       chr_name: chr1
+model:
+  input_size: 230 # vocab_size*seq_len
+  hidden_size: 250
+  n_hidden: 1
+  dropout: 0.5
 data:
   class_path: lit_modules.data_modules.GenomeDataModule
   init_args:
     data_file: ../data/reference/hg38.fa
-    chr: chr1
-    num_workers: 10
+    num_workers: 4
     batch_size: 128

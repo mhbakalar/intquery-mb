@@ -71,7 +71,7 @@ class GenomeBoxcarDataset(Dataset):
   def __init__(
     self,
     fasta_file,
-    chr_name = None,
+    chr_name,
     filter_df_fn = utils.fasta_data.identity,
     window_length = 46,
     context_length = None,
@@ -96,7 +96,6 @@ class GenomeBoxcarDataset(Dataset):
     
     # Collect fasta index information
     self.length = len(self.fasta.seqs[self.chr_name]) - window_length
-    self.length = 10000000
     self.start = 0
 
     self.return_augs = return_augs
