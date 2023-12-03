@@ -9,16 +9,18 @@ from lit_modules import data_modules, modules
 
 class BedWriter(BasePredictionWriter):
 
-    def __init__(self, output_dir, strand, write_interval):
+    def __init__(self, output_dir, chr_name, seq_length, strand, write_interval):
         super().__init__(write_interval)
         self.output_dir = output_dir
+        self.chr_name = chr_name
+        self.seq_length = seq_length
         self.strand = strand
 
     def write_on_epoch_end(self, trainer, pl_module, predictions, batch_indices):
         # Parameters
-        chr_name = trainer.datamodule.chr_name
-        seq_length = trainer.datamodule.seq_length
-        strand = trainer.datamodule.strand
+        # chr_name = trainer.datamodule.chr_name
+        # seq_length = trainer.datamodule.seq_length
+        # strand = trainer.datamodule.strand
 
         # Construct bed file for positive predictions
         save_data = []  # Use a list of tuples instead of separate lists
@@ -34,8 +36,8 @@ class BedWriter(BasePredictionWriter):
         preds = torch.flatten(torch.hstack(pos_preds))
 
         # Save predictions
-        output_file = os.path.join(self.output_dir, f"{chr_name}.bed")
-        pred_bed = pd.DataFrame.from_dict({'chr':chr_name, 'start':inds, 'end':inds+seq_length, 'pred':preds, 'strand':strand})
+        output_file = os.path.join(self.output_dir, f"{self.chr_name}.bed")
+        pred_bed = pd.DataFrame.from_dict({'chr':self.chr_name, 'start':inds, 'end':inds+self.seq_length, 'pred':preds, 'strand':self.strand})
 
         pred_bed.to_csv(
             output_file,
