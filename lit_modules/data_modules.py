@@ -182,7 +182,7 @@ class GenomeDataModule(L.LightningDataModule):
     def setup(self, stage: str):
         if stage == 'predict':
             self.pred_dataset = datasets.GenomeBoxcarDataset(fasta_file=self.data_file, 
-                                                                    chr=self.chr,
+                                                                    chr_name=self.chr,
                                                                     window_length=self.seq_length,
                                                                     read_ahead=self.batch_size*self.seq_length)
 

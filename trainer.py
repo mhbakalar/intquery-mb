@@ -38,8 +38,7 @@ class BedWriter(BasePredictionWriter):
         pred_bed.to_csv(
             output_file, 
             sep='\t', 
-            index=None, 
-            header=not os.path.exists(output_file)
+            index=None
         )
 
         torch.save(predictions, os.path.join(self.output_dir, "predictions.pt"))

@@ -95,7 +95,8 @@ class GenomeBoxcarDataset(Dataset):
     )
     
     # Collect fasta index information
-    self.length = len(self.fasta.seqs[self.chr]) - window_length
+    self.length = len(self.fasta.seqs[self.chr_name]) - window_length
+    self.length = 10000000
     self.start = 0
 
     self.return_augs = return_augs
@@ -104,7 +105,7 @@ class GenomeBoxcarDataset(Dataset):
     return self.length
 
   def __getitem__(self, ind):
-    chr_name, start, end = (self.chr, ind, ind + self.window_length)
+    chr_name, start, end = (self.chr_name, ind, ind + self.window_length)
     one_hot = self.fasta(chr_name, start, end, return_augs = self.return_augs)
 
     # Set the dinculeotide to NN

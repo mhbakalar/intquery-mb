@@ -5,6 +5,8 @@ trainer:
     init_args:
       output_dir: output/chr1
       write_interval: epoch
+      seq_length: 46
+      chr_name: chr1
 data:
   class_path: lit_modules.data_modules.GenomeDataModule
   init_args:
