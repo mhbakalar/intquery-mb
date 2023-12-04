@@ -1,0 +1,24 @@
+# lightning.pytorch==2.1.0
+trainer:
+  callbacks:
+    class_path: BedWriter
+    init_args:
+      output_dir: output
+      write_threshold: 0.0
+      write_interval: epoch
+model:
+  input_size: 184 # vocab_size*seq_len
+  hidden_size: 250
+  n_hidden: 1
+  dropout: 0.5
+data:
+  class_path: lit_modules.data_modules.NumericDataModule
+  init_args:
+    data_path: data/Validated_CS
+    decoy_path: data/decoys_500K
+    genomic_reference_file: ../data/reference/hg38.fa
+    decoy_mul: 0
+    sequence_length: 46
+    train_test_split: 0.8
+    batch_size: 128
+    log_transform: False

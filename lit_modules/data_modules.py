@@ -122,23 +122,29 @@ class NumericDataModule(L.LightningDataModule):
 
         # Load the cryptic seq data and decoys
         sites = pd.read_csv(os.path.join(self.data_path, fname))
-        decoys = pd.read_csv(os.path.join(self.decoy_path, fname))
+        hits = sites['seq'].values
 
-        # Sample decoys using decoy_mul factor
-        decoys = decoys.sample(n=len(sites)*self.decoy_mul, replace=True)
+        # Load decoys
+        if self.decoy_mul > 0:
+            decoys = pd.read_csv(os.path.join(self.decoy_path, fname))
+
+            # Sample decoys using decoy_mul factor
+            decoys = decoys.sample(n=len(sites)*self.decoy_mul, replace=True)
+            decoys = decoys['seq'].values
 
         # Cryptic sites data for training
-        hits = sites['seq'].values
-        decoys = decoys['seq'].values
-        sequences = np.hstack([hits,decoys])
-
         if self.log_transform:
             sites['value'] = np.log(sites['value'])
-
-        labels = np.hstack([
-            sites['value'].values.astype(np.float32),
-            np.zeros(len(decoys), dtype=np.float32)
-        ])
+        
+        if self.decoy_mul > 0:
+            sequences = np.hstack([hits,decoys])
+            labels = np.hstack([
+                sites['value'].values.astype(np.float32),
+                np.zeros(len(decoys), dtype=np.float32)
+            ])
+        else:
+            sequences = hits
+            labels = sites['value'].values.astype(np.float32)
 
         self.dataset = datasets.SequenceDataset(sequences, labels)
 
