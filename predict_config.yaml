@@ -6,7 +6,7 @@ trainer:
       output_dir: output
       write_interval: epoch
 model:
-  input_size: 230 # vocab_size*seq_len
+  input_size: 184 # vocab_size*seq_len
   hidden_size: 250
   n_hidden: 1
   dropout: 0.5

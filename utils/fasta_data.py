@@ -40,20 +40,20 @@ seq_indices_embed[ord('T')] = 3
 seq_indices_embed[ord('N')] = 4
 seq_indices_embed[ord('.')] = -1
 
-one_hot_embed = torch.zeros(256, 5)
-one_hot_embed[ord('a')] = torch.Tensor([1., 0., 0., 0., 0.])
-one_hot_embed[ord('c')] = torch.Tensor([0., 1., 0., 0., 0.])
-one_hot_embed[ord('g')] = torch.Tensor([0., 0., 1., 0., 0.])
-one_hot_embed[ord('t')] = torch.Tensor([0., 0., 0., 1., 0.])
-one_hot_embed[ord('n')] = torch.Tensor([0., 0., 0., 0., 1.])
-one_hot_embed[ord('A')] = torch.Tensor([1., 0., 0., 0., 0.])
-one_hot_embed[ord('C')] = torch.Tensor([0., 1., 0., 0., 0.])
-one_hot_embed[ord('G')] = torch.Tensor([0., 0., 1., 0., 0.])
-one_hot_embed[ord('T')] = torch.Tensor([0., 0., 0., 1., 0.])
-one_hot_embed[ord('N')] = torch.Tensor([0., 0., 0., 0., 1.])
-one_hot_embed[ord('.')] = torch.Tensor([0.25, 0.25, 0.25, 0.25, 0.25])
+one_hot_embed = torch.zeros(256, 4)
+one_hot_embed[ord('a')] = torch.Tensor([1., 0., 0., 0.])
+one_hot_embed[ord('c')] = torch.Tensor([0., 1., 0., 0.])
+one_hot_embed[ord('g')] = torch.Tensor([0., 0., 1., 0.])
+one_hot_embed[ord('t')] = torch.Tensor([0., 0., 0., 1.])
+one_hot_embed[ord('n')] = torch.Tensor([0., 0., 0., 0.])
+one_hot_embed[ord('A')] = torch.Tensor([1., 0., 0., 0.])
+one_hot_embed[ord('C')] = torch.Tensor([0., 1., 0., 0.])
+one_hot_embed[ord('G')] = torch.Tensor([0., 0., 1., 0.])
+one_hot_embed[ord('T')] = torch.Tensor([0., 0., 0., 1.])
+one_hot_embed[ord('N')] = torch.Tensor([0., 0., 0., 0.])
+one_hot_embed[ord('.')] = torch.Tensor([0.25, 0.25, 0.25, 0.25])
 
-reverse_complement_map = torch.Tensor([3, 2, 1, 0, 4]).long()
+reverse_complement_map = torch.Tensor([3, 2, 1, 0]).long()
 
 def torch_fromstring(seq_strs):
   batched = not isinstance(seq_strs, str)
@@ -73,8 +73,8 @@ def str_to_one_hot(seq_strs):
 def seq_indices_to_one_hot(t, padding = -1):
   is_padding = t == padding
   t = t.clamp(min = 0)
-  one_hot = F.one_hot(t, num_classes = 5)
-  out = one_hot[..., :5].float()
+  one_hot = F.one_hot(t, num_classes = 4)
+  out = one_hot[..., :4].float()
   out = out.masked_fill(is_padding[..., None], 0.25)
   return out
 
@@ -86,7 +86,7 @@ def seq_indices_reverse_complement(seq_indices):
 
 def one_hot_reverse_complement(one_hot):
   *_, n, d = one_hot.shape
-  assert d == 5, 'must be one hot encoding with last dimension equal to 5'
+  assert d == 4, 'must be one hot encoding with last dimension equal to 4'
   return torch.flip(one_hot, (-1, -2))
 
 # processing bed files
