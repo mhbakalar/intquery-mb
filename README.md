@@ -15,18 +15,24 @@ Sample config files:
 train_config.yaml
 predict_config.yaml
 
-## Usage
+## Usage: pure python
 
 To train the model using the specified configuration, run the training script with the following command:
 
 ```bash
-python train.py fit --config config.yaml
+python trainer.py fit --config config.yaml
+```
+
+To test or predict using an existing checkpoint file:
+```bash
+python trainer.py test --ckpt_path ckpt_path.ckpt --config config.yaml
+python trainer.py predict --ckpt_path ckpt_path.ckpt --config config.yaml
 ```
 
 To predict using the specified configuration, run the training script with the following command:
 
 ```bash
-python train.py fit --ckpt_path ckpt_path.ckpt--config config.yaml
+python trainer.py predict --ckpt_path ckpt_path.ckpt--config config.yaml
 ```
 
 Replace `ckpt_path.yaml` and `config.yaml` with the path to your checkpoint and configuration file if it's named differently.
