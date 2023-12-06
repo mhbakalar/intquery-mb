@@ -26,6 +26,8 @@ python trainer.py fit --config train_config.yaml
 To test or predict using an existing checkpoint file:
 ```bash
 python trainer.py test --ckpt_path ckpt_path.ckpt --config train_config.yaml
+```
+```bash
 python trainer.py predict --ckpt_path ckpt_path.ckpt --config train_config.yaml
 ```
 
