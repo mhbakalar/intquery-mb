@@ -5,6 +5,7 @@ trainer:
     init_args:
       output_dir: output
       write_interval: epoch
+      write_threshold: 0.1
 model:
   input_size: 184 # vocab_size*seq_len
   hidden_size: 500
