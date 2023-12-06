@@ -53,6 +53,8 @@ one_hot_embed[ord('T')] = torch.Tensor([0., 0., 0., 1.])
 one_hot_embed[ord('N')] = torch.Tensor([0., 0., 0., 0.])
 one_hot_embed[ord('.')] = torch.Tensor([0.25, 0.25, 0.25, 0.25])
 
+one_hot_to_np_char = np.array(['A','C','G','T'])
+
 reverse_complement_map = torch.Tensor([3, 2, 1, 0]).long()
 
 def torch_fromstring(seq_strs):
@@ -77,6 +79,9 @@ def seq_indices_to_one_hot(t, padding = -1):
   out = one_hot[..., :4].float()
   out = out.masked_fill(is_padding[..., None], 0.25)
   return out
+
+def str_from_one_hot(one_hot):
+  return one_hot_to_np_char[torch.argmax(one_hot, axis=1)]
 
 # augmentations
 

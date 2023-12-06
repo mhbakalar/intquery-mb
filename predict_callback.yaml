@@ -1,0 +1,6 @@
+trainer:
+  callbacks:
+    class_path: BedWriter
+    init_args:
+      output_dir: output
+      write_interval: epoch

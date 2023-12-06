@@ -1,7 +1,8 @@
 import numpy as np
-import random
+import math
+import torch
 import torch.nn.functional as F
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, IterableDataset
 
 import utils.fasta_data
 
@@ -67,50 +68,47 @@ class GenomeIntervalDataset(Dataset):
     one_hot = self.fasta(chr_name, start, end, return_augs = self.return_augs)
     return one_hot
   
-class GenomeBoxcarDataset(Dataset):
-  def __init__(
-    self,
-    fasta_file,
-    chr_name,
-    filter_df_fn = utils.fasta_data.identity,
-    window_length = 46,
-    context_length = None,
-    return_seq_indices = False,
-    shift_augs = None,
-    rc_aug = False,
-    return_augs = False,
-    read_ahead = 0
-  ):
-    super().__init__()
-    self.window_length = window_length
-    self.chr_name = chr_name
+class GenomeIterableDataset(IterableDataset):
+    def __init__(self, fasta_file, chr_name, window_length, rc_aug):
+      super().__init__()
+      
+      self.fasta_file = fasta_file
+      self.chr_name = chr_name
+      self.window_length = window_length
+      self.rc_aug = rc_aug
 
-    self.fasta = utils.fasta_data.FastaInterval(
-      fasta_file = fasta_file,
-      context_length = context_length,
-      return_seq_indices = return_seq_indices,
-      shift_augs = shift_augs,
-      rc_aug = rc_aug,
-      read_ahead = read_ahead
-    )
-    
-    # Collect fasta index information
-    self.length = len(self.fasta.seqs[self.chr_name]) - window_length
-    self.start = 0
+      # Peak at fasta file to determine sequence length
+      fasta_length = len(
+        utils.fasta_data.FastaInterval(
+          fasta_file = self.fasta_file,
+        ).seqs[self.chr_name]
+      )
+      
+      self.start = 0
+      self.end = fasta_length - self.window_length
 
-    self.return_augs = return_augs
-    
-  def __len__(self):
-    return self.length
+    def load_fasta(self):
+      self.fasta_handle = utils.fasta_data.FastaInterval(
+        fasta_file = self.fasta_file,
+        rc_aug = self.rc_aug,
+        read_ahead = 10000
+      )
 
-  def __getitem__(self, ind):
-    chr_name, start, end = (self.chr_name, ind, ind + self.window_length)
-    one_hot = self.fasta(chr_name, start, end, return_augs = self.return_augs)
+    def __len__(self):
+       return self.end - self.start
 
-    # Set the dinculeotide to NN
-    dn_left = int(self.window_length/2)-1
-    dn_one_hot = utils.fasta_data.str_to_one_hot('NN')
-    one_hot[dn_left:dn_left+2,:] = dn_one_hot
+    def __iter__(self):
+        self.load_fasta()
+        worker_info = torch.utils.data.get_worker_info()
+        if worker_info is None:  # single-process data loading, return the full iterator
+            iter_start = self.start
+            iter_end = self.end
+        else:  # in a worker process
+            # split workload
+            per_worker = int(math.ceil((self.end - self.start) / float(worker_info.num_workers)))
+            worker_id = worker_info.id
+            iter_start = self.start + worker_id * per_worker
+            iter_end = min(iter_start + per_worker, self.end)
 
-    return one_hot, ind
-
+        for i in range(iter_start, iter_end - self.window_length):
+            yield self.fasta_handle(self.chr_name, i, i + self.window_length), i
