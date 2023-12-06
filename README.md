@@ -20,19 +20,19 @@ predict_config.yaml
 To train the model using the specified configuration, run the training script with the following command:
 
 ```bash
-python trainer.py fit --config config.yaml
+python trainer.py fit --config train_config.yaml
 ```
 
 To test or predict using an existing checkpoint file:
 ```bash
-python trainer.py test --ckpt_path ckpt_path.ckpt --config config.yaml
-python trainer.py predict --ckpt_path ckpt_path.ckpt --config config.yaml
+python trainer.py test --ckpt_path ckpt_path.ckpt --config train_config.yaml
+python trainer.py predict --ckpt_path ckpt_path.ckpt --config train_config.yaml
 ```
 
-To predict using the specified configuration, run the training script with the following command:
+To predict on a whole genome fasta using the specified configuration, run the training script with the following command:
 
 ```bash
-python trainer.py predict --ckpt_path ckpt_path.ckpt--config config.yaml
+python trainer.py predict --ckpt_path ckpt_path.ckpt--config predict_config.yaml
 ```
 
 Replace `ckpt_path.yaml` and `config.yaml` with the path to your checkpoint and configuration file if it's named differently.
