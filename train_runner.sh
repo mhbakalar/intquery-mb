@@ -1,5 +1,6 @@
 #!/bin/bash
 # Train model
+# Usage: ./train_runner.sh train_config.yaml
 
 CONFIG_FILE="$1"
 
