@@ -179,6 +179,7 @@ class GenomeDataModule(L.LightningDataModule):
     def __init__(self, data_file, chr_name, seq_length=46, strand='+', num_workers=0, batch_size=32):
         super().__init__()
 
+        print("Initialize genome data module!")
         self.data_file = data_file
         self.chr_name = chr_name
         self.num_workers = num_workers

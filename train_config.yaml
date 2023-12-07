@@ -1,11 +1,11 @@
 # lightning.pytorch==2.1.0
 trainer:
-  max_epochs: 20
+  max_epochs: 40
 model:
   input_size: 184 # vocab_size*seq_len
-  hidden_size: 500
+  hidden_size: 300
   n_hidden: 1
-  dropout: 0.5
+  dropout: 0.25
   lr: 0.001
 data:
   class_path: lit_modules.data_modules.NumericDataModule

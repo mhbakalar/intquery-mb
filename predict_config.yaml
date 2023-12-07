@@ -5,16 +5,16 @@ trainer:
     init_args:
       output_dir: output
       write_interval: epoch
-      write_threshold: 0.1
+      write_threshold: 1.0
 model:
   input_size: 184 # vocab_size*seq_len
-  hidden_size: 500
+  hidden_size: 300
   n_hidden: 1
   dropout: 0.5
 data:
   class_path: lit_modules.data_modules.GenomeDataModule
   init_args:
     data_file: ../data/reference/hg38.fa
-    num_workers: 4
+    num_workers: 1
     batch_size: 128
     seq_length: 46

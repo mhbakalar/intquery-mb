@@ -1,9 +1,8 @@
 numpy
 pandas
-polars
 pyfaidx
 torch
 torchmetrics
 tensorboard
-ray "[data,train,tune,serve]"
+lightning
 jsonargparse "[signatures]"

@@ -9,7 +9,7 @@ PREDICT_CONFIG="$2"
 POS="+"
 NEG="-"
 
-for CHR in {22..22}; do
+for CHR in {1..22}; do
     CHR_NAME="chr$CHR"
     COMMAND_POS="python trainer.py predict --ckpt_path $CKPT_PATH --config $PREDICT_CONFIG --data.chr_name $CHR_NAME --data.strand $POS"
     COMMAND_NEG="python trainer.py predict --ckpt_path $CKPT_PATH --config $PREDICT_CONFIG --data.chr_name $CHR_NAME --data.strand $NEG"
