@@ -17,6 +17,7 @@ class MLPModel(nn.Module):
     self.linear_relu_stack = nn.Sequential(
             nn.Linear(input_size, hidden_size),
             nn.ReLU(),
+            nn.Linear(input_size, hidden_size),
             nn.Dropout(dropout),
             nn.Linear(hidden_size, output_size),
         )
