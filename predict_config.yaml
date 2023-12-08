@@ -15,6 +15,6 @@ data:
   class_path: lit_modules.data_modules.GenomeDataModule
   init_args:
     data_file: ../data/reference/hg38.fa
-    num_workers: 1
+    num_workers: 2
     batch_size: 128
     seq_length: 46
