@@ -17,7 +17,7 @@ predict_config.yaml
 To train the model using the specified configuration, run the training script with the following command:
 
 ```bash
-python trainer.py fit --config config.yaml
+python trainer.py fit --config train_config.yaml
 ```
 
 To test or predict using an existing checkpoint file:
