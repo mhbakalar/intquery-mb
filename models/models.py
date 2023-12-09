@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import torch.nn as nn
 import torch.utils.data
+import torch
 
 '''
 A simple fully connected neural network
@@ -11,18 +12,18 @@ class MLPModel(nn.Module):
     super().__init__()
 
     # Input layer
-    self.flatten = nn.Flatten()
 
     # Neural network
     self.linear_relu_stack = nn.Sequential(
             nn.Linear(input_size, hidden_size),
             nn.ReLU(),
-            nn.Linear(input_size, hidden_size),
+            nn.Linear(hidden_size, hidden_size),
+            nn.ReLU(),
             nn.Dropout(dropout),
             nn.Linear(hidden_size, output_size),
         )
 
   def forward(self, x):
-    x = self.flatten(x)
+    x = torch.flatten(x,start_dim=1, end_dim=2)
     x = self.linear_relu_stack(x)
     return x
