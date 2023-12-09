@@ -4,7 +4,7 @@ import torch
 import pysam
 from lit_modules import data_modules, modules
 import utils.fasta_data
-
+import pandas as pd
 
 def parse_arguments():
     """
@@ -17,6 +17,7 @@ def parse_arguments():
     parser.add_argument('--vcf_file', type=str, required=True, help='Path to VCF file')
     parser.add_argument('--fasta_file', type=str, required=True, help='Path to FASTA file')
     parser.add_argument('--model_file', type=str, required=True, help='Path to the trained model file')
+    # parser.add_argument('--validated_sites', type=str, required=True, help='Validated sites')
     return parser.parse_args()
 
 def load_model(model_path):
@@ -85,6 +86,16 @@ def process_variants(variants, fasta_file):
     fasta.close()
     return alt_sequence_dict
 
+def predict_validated_sites(model, validated_sites):
+    model.eval()
+    df = pd.read_csv(validated_sites)
+    for index,row in df.iterrows():
+        site = row['id']
+        sequence = row['seq']
+        one_hot_seq = utils.fasta_data.str_to_one_hot(sequence)
+        one_hot_seq = one_hot_seq.unsqueeze(0)
+        output = model(one_hot_seq).item()
+        print(f'{site}:{output}')
 
 def predict_variant_effects(model, alt_sequence_dict):
     """
@@ -96,31 +107,26 @@ def predict_variant_effects(model, alt_sequence_dict):
     """
     model.eval()
     cas031_sequence = 'AGTTGAGCCTTGAACAACAGGGNNTTCAACTGTGTGGATCCACTTA'
+    test_sequence =   'AAAAAAAAAAAAAAAAAAAAAANNAAAAAAAAAAAAAAAAAAAAAA'
     one_hot_original_seq = utils.fasta_data.str_to_one_hot(cas031_sequence)
     one_hot_original_seq = one_hot_original_seq.unsqueeze(0)
-    original_seq_output = model(one_hot_original_seq)
-    print(original_seq_output)
+    original_seq_output = model(one_hot_original_seq).item()
+  
     for key, sequences in alt_sequence_dict.items():
-        
         for seq in sequences:
             chrom, pos, original_sequence, variant_sequence = seq
             original_sequence_no_central_dinucleotide = original_sequence[:22] + 'NN' + original_sequence[24:]
             variant_sequence_no_central_dinucleotide = variant_sequence[:22] + 'NN' + variant_sequence[24:]
 
-            print(original_sequence_no_central_dinucleotide)
-
             one_hot_original_seq = utils.fasta_data.str_to_one_hot(original_sequence_no_central_dinucleotide).unsqueeze(0)
-
-            print(one_hot_original_seq)
             
             one_hot_variant_seq = utils.fasta_data.str_to_one_hot(variant_sequence_no_central_dinucleotide).unsqueeze(0)
             
             original_seq_output = model(one_hot_original_seq).item()
-            print(original_seq_output)
             variant_seq_output = model(one_hot_variant_seq).item()
 
             # Output handling
-            if original_seq_output > -5 or variant_seq_output > -5:
+            if original_seq_output > -7.353888034820557 or variant_seq_output > -7.353888034820557:
                 print(f"Location: {chrom}:{pos}")
                 print(f"Output for original sequence {original_sequence_no_central_dinucleotide}: {original_seq_output}")
                 print(f"Output for variant sequence {variant_sequence_no_central_dinucleotide}: {variant_seq_output}")
@@ -135,3 +141,4 @@ if __name__ == "__main__":
     variants = read_vcf(args.vcf_file)
     alt_sequence_dict = process_variants(variants, args.fasta_file)
     predict_variant_effects(model, alt_sequence_dict)
+    # predict_validated_sites(model, args.validated_sites)

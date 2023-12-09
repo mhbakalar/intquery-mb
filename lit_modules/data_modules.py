@@ -6,6 +6,7 @@ import pandas as pd
 import os
 import numpy as np
 from models import datasets
+from scipy.stats import boxcox
 
 '''
 Binary classifier. Optionally, use scalar value as sampling weight.
@@ -132,8 +133,11 @@ class NumericDataModule(L.LightningDataModule):
             decoys = decoys['seq'].values
 
         # Cryptic sites data for training
-        if self.log_transform:
+        if self.log_transform == 'log' or self.log_transform == True:
             sites['value'] = np.log(sites['value'])
+        elif self.log_transform == 'boxcox':    
+            sites['value'], lambda_value = boxcox(sites['value'])
+            print(f'Boxcox lambda is: {lambda_value}')
         
         if self.decoy_mul > 0:
             sequences = np.hstack([hits,decoys])
