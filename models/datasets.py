@@ -90,66 +90,35 @@ class GenomeIterableDataset(IterableDataset):
       self.start = 0
       self.end = fasta_length - self.window_length
 
-      self.load_fasta()
-
     def load_fasta(self):
       self.fasta_handle = utils.fasta_data.FastaInterval(
         fasta_file = self.fasta_file,
         rc_aug = self.rc_aug,
-        read_ahead = 0
+        read_ahead = 10000
       )
 
-    def __len__(self):
+    def _iter_bounds(self):
       worker_info = torch.utils.data.get_worker_info()
       if worker_info is None:  # single-process data loading, return the full iterator
-         # For sharding data across GPUs
-        world_size = torch.distributed.get_world_size()
-        process_rank = torch.distributed.get_rank()
-        return int((self.end - self.start) / world_size)
+        return self.start, self.end
       else:  # in a worker process
             # split workload
         num_workers = worker_info.num_workers
         worker_id = worker_info.id
-        
-        # For sharding data across GPUs
-        world_size = torch.distributed.get_world_size()
-        process_rank = torch.distributed.get_rank()
 
         per_worker = int(math.ceil((self.end - self.start) / float(worker_info.num_workers)))
-        per_process = int(per_worker / world_size)
 
-        iter_start = self.start + (worker_id * per_worker) + (process_rank * per_process)
-        iter_end = min(iter_start + per_process, self.end)
-        return iter_end - iter_start
+        iter_start = self.start + (worker_id * per_worker)
+        iter_end = min(iter_start + per_worker, self.end)
+        return iter_start, iter_end
+
+
+    def __len__(self):
+      iter_start, iter_end = self._iter_bounds()
+      return iter_end - iter_start
 
     def __iter__(self):
-        worker_info = torch.utils.data.get_worker_info()
-        if worker_info is None:  # single-process data loading, return the full iterator
-            iter_start = self.start
-            iter_end = self.end
-
-            # For sharding data across GPUs
-            world_size = torch.distributed.get_world_size()
-            process_rank = torch.distributed.get_rank()
-
-            per_process = int(math.ceil((self.end - self.start) / world_size))
-            iter_start = self.start + (process_rank * per_process)
-            iter_end = min(iter_start + per_process, self.end)
-
-        else:  # in a worker process
-            # split workload
-            num_workers = worker_info.num_workers
-            worker_id = worker_info.id
-            
-            # For sharding data across GPUs
-            world_size = torch.distributed.get_world_size()
-            process_rank = torch.distributed.get_rank()
-
-            per_worker = int(math.ceil((self.end - self.start) / float(worker_info.num_workers)))
-            per_process = int(per_worker / world_size)
-
-            iter_start = self.start + (worker_id * per_worker) + (process_rank * per_process)
-            iter_end = min(iter_start + per_process, self.end)
-
-        for i in range(iter_start, iter_end - self.window_length):
-            yield self.fasta_handle(self.chr_name, i, i + self.window_length), i
+      worker_info = torch.utils.data.get_worker_info()
+      iter_start, iter_end = self._iter_bounds()
+      for i in range(iter_start, iter_end - self.window_length):
+          yield self.fasta_handle(self.chr_name, i, i + self.window_length), i
