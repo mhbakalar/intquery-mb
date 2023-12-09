@@ -67,7 +67,8 @@ class BedWriter(BasePredictionWriter):
         
         # Uncomment to save all predictions (takes up lots of disk space!)
         # torch.save(predictions, os.path.join(self.output_dir, f"{chr_name}_predictions.pt"))
-    
+
+
 def cli_main():
     cli = LightningCLI(modules.Regression)
     # note: don't call fit!!

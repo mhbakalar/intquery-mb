@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import torch.nn as nn
 import torch.utils.data
+import torch
 
 '''
 A simple fully connected neural network
@@ -32,7 +33,6 @@ class MLPModel(nn.Module):
     print(self.layers)
 
   def forward(self, x):
-    # Flatten the input tensor except for the batch dimension
-    x = x.view(x.size(0), -1)
-    x = self.layers(x)
+    x = self.flatten(x)
+    x = self.linear_relu_stack(x)
     return x

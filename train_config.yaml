@@ -3,7 +3,7 @@ trainer:
   max_epochs: 40
 model:
   input_size: 184 # vocab_size*seq_len
-  hidden_size: 300
+  hidden_size: 64
   n_hidden: 1
   dropout: 0.25
   lr: 0.001
@@ -13,8 +13,8 @@ data:
     data_path: data/TB000208a
     decoy_path: data/decoys_500K
     genomic_reference_file: ../data/reference/hg38.fa
-    decoy_mul: 1
+    decoy_mul: 0
     sequence_length: 46
     train_test_split: 0.8
     batch_size: 128
-    log_transform: True
+    log_transform: log
