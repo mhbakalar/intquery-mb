@@ -198,20 +198,15 @@ class GenomeDataModule(L.LightningDataModule):
 
     def predict_dataloader(self):
         def collate_fn(batch):
-            one_hot = torch.stack([x[0] for x in batch])
-            label = torch.tensor([x[1] for x in batch])
-            return one_hot, label
-        
-        def worker_init_fn(worker_id):
-            worker_info = torch.utils.data.get_worker_info()
-            worker_info.dataset.load_fasta()
+            one_hot, labels = zip(*batch)
+            return torch.stack(one_hot), torch.tensor(labels)
 
-        # If running on multiple GPUs use a distributed sampler
-        if torch.distributed.is_initialized():
-            sampler = torch.utils.data.distributed.DistributedSampler(self.pred_dataset)
-        else:
-            sampler = None
-    
+        def worker_init_fn(worker_id):
+            torch.utils.data.get_worker_info().dataset.load_fasta()
+
+        sampler = (torch.utils.data.distributed.DistributedSampler(self.pred_dataset)
+                if torch.distributed.is_initialized() else None)
+
         return torch.utils.data.DataLoader(
             self.pred_dataset, 
             num_workers=self.num_workers, 
@@ -219,4 +214,5 @@ class GenomeDataModule(L.LightningDataModule):
             collate_fn=collate_fn,
             worker_init_fn=worker_init_fn,
             batch_size=self.batch_size,
-            sampler=sampler)
+            sampler=sampler
+        )
