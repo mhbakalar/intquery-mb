@@ -8,8 +8,11 @@ import torch
 A simple fully connected neural network
 '''
 class MLPModel(nn.Module):
-  def __init__(self, input_size, hidden_size, output_size=1, n_hidden=1, dropout=0.2):
+  def __init__(self, seq_length, vocab_size, hidden_size, output_size=1, n_hidden=1, dropout=0.2):
     super().__init__()
+
+    # Input dimensions
+    input_size = seq_length * vocab_size
 
     # Initialize layers
     layers = []
@@ -30,9 +33,7 @@ class MLPModel(nn.Module):
 
     # Combine all layers into a sequential module
     self.layers = nn.Sequential(*layers)
-    print(self.layers)
 
   def forward(self, x):
-    x = self.flatten(x)
-    x = self.linear_relu_stack(x)
-    return x
+    x = x.view(x.size(0), -1)
+    return self.layers(x)
