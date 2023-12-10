@@ -77,22 +77,24 @@ class BinaryClassifier(pl.LightningModule):
         return optimizer
 
 class Regression(pl.LightningModule):
-    def __init__(self, input_size, hidden_size, n_hidden, dropout=0.5, lr=1e-3):
+    def __init__(self, seq_length, vocab_size, hidden_size, n_hidden, dropout=0.5, lr=1e-3):
         super().__init__()
         self.save_hyperparameters()
 
-        self.input_size = input_size
+        self.seq_length = seq_length
+        self.vocab_size = vocab_size
         self.hidden_size = hidden_size
         self.n_hidden = n_hidden
         self.dropout = dropout
         self.lr = lr
 
         self.model = models.MLPModel(
-            input_size=self.input_size, 
+            seq_length=self.seq_length,
+            vocab_size=self.vocab_size, 
             hidden_size=self.hidden_size, 
             output_size=1, 
             n_hidden=self.n_hidden, 
-            dropout=0.5
+            dropout=self.dropout
         )
         self.loss_fn = torch.nn.MSELoss()
 

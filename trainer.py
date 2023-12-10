@@ -35,6 +35,7 @@ class BedWriter(BasePredictionWriter):
 
             # Save predictions
             pred_bed = pd.DataFrame.from_dict({'chr':self.write_name, 'start':inds, 'end':inds+self.seq_length, 'pred':preds, 'strand':self.strand})
+            pred_bed = pred_bed.sort_values('start')
 
         # Predict on numeric dataset
         elif isinstance(trainer.datamodule, data_modules.NumericDataModule):
