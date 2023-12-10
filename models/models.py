@@ -19,13 +19,13 @@ class MLPModel(nn.Module):
 
     # Input layer
     layers.append(nn.Linear(input_size, hidden_size))
-    layers.append(nn.ReLU())
+    layers.append(nn.Hardswish())
     layers.append(nn.Dropout(dropout))
 
     # Hidden layers
     for i in range(n_hidden):
         layers.append(nn.Linear(hidden_size, hidden_size))
-        layers.append(nn.ReLU())
+        layers.append(nn.Hardswish())
         layers.append(nn.Dropout(dropout))
 
     # Output layer
