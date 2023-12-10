@@ -208,15 +208,11 @@ class GenomeDataModule(L.LightningDataModule):
         def worker_init_fn(worker_id):
             torch.utils.data.get_worker_info().dataset.load_fasta()
 
-        sampler = (torch.utils.data.distributed.DistributedSampler(self.pred_dataset)
-                if torch.distributed.is_initialized() else None)
-
         return torch.utils.data.DataLoader(
             self.pred_dataset, 
             num_workers=self.num_workers, 
             pin_memory=True,
             collate_fn=collate_fn,
             worker_init_fn=worker_init_fn,
-            batch_size=self.batch_size,
-            sampler=sampler
+            batch_size=self.batch_size
         )

@@ -3,7 +3,7 @@ import math
 import torch
 import torch.nn.functional as F
 from torch.utils.data import Dataset, IterableDataset
-import torch.distributed
+import torch.distributed as dist
 from torch.utils.data.distributed import DistributedSampler
 
 
@@ -99,23 +99,32 @@ class GenomeIterableDataset(IterableDataset):
 
     def _iter_bounds(self):
       worker_info = torch.utils.data.get_worker_info()
-      if worker_info is None:  # single-process data loading, return the full iterator
-        return self.start, self.end
-      else:  # in a worker process
-            # split workload
-        num_workers = worker_info.num_workers
-        worker_id = worker_info.id
+      worker_id = worker_info.id
+      total_workers = worker_info.num_workers
+      if dist.is_available() and dist.is_initialized():
+            world_size = dist.get_world_size()
+            rank = dist.get_rank()
+      else:
+          world_size = 1
+          rank = 0
+      total_workers *= world_size
 
-        per_worker = int(math.ceil((self.end - self.start) / float(worker_info.num_workers)))
+      global_worker_id = worker_id * world_size + rank
 
-        iter_start = self.start + (worker_id * per_worker)
-        iter_end = min(iter_start + per_worker, self.end)
-        return iter_start, iter_end
-
+      per_worker = int(math.ceil((self.end - self.start) / float(total_workers)))
+      iter_start = self.start + (global_worker_id * per_worker)
+      iter_end = min(iter_start + per_worker, self.end)
+      return iter_start, iter_end
 
     def __len__(self):
-      iter_start, iter_end = self._iter_bounds()
-      return iter_end - iter_start
+      if dist.is_available() and dist.is_initialized():
+            world_size = dist.get_world_size()
+            rank = dist.get_rank()
+      else:
+          world_size = 1
+          rank = 0
+      # This might be inaccurate...
+      return int((self.end - self.start) / world_size)
 
     def __iter__(self):
       worker_info = torch.utils.data.get_worker_info()

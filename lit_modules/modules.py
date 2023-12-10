@@ -96,7 +96,6 @@ class Regression(pl.LightningModule):
             n_hidden=self.n_hidden, 
             dropout=self.dropout
         )
-        print(self.model)
         self.loss_fn = torch.nn.MSELoss()
 
     def forward(self, x):
