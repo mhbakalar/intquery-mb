@@ -1,12 +1,12 @@
 import torch
-import torch.distributed
-import torch.utils.data.distributed
 import lightning as L
+import torch.nn.functional as F
+import torchmetrics
+import genomepy
 import pandas as pd
 import os
 import numpy as np
 from models import datasets
-from scipy.stats import boxcox
 
 '''
 Binary classifier. Optionally, use scalar value as sampling weight.
@@ -103,7 +103,8 @@ class NumericDataModule(L.LightningDataModule):
         sequence_length=46,
         train_test_split=0.8, 
         batch_size=32,
-        log_transform=False
+        log_transform=False,
+        one_hot=True
     ):
         super().__init__()
 
@@ -115,6 +116,7 @@ class NumericDataModule(L.LightningDataModule):
         self.train_test_split = train_test_split
         self.batch_size = batch_size
         self.log_transform = log_transform
+        self.one_hot = one_hot
 
     def setup(self, stage: str):
         # Select test/train dataset
@@ -133,11 +135,8 @@ class NumericDataModule(L.LightningDataModule):
             decoys = decoys['seq'].values
 
         # Cryptic sites data for training
-        if self.log_transform == 'log' or self.log_transform == True:
+        if self.log_transform:
             sites['value'] = np.log(sites['value'])
-        elif self.log_transform == 'boxcox':    
-            sites['value'], lambda_value = boxcox(sites['value'])
-            print(f'Boxcox lambda is: {lambda_value}')
         
         if self.decoy_mul > 0:
             sequences = np.hstack([hits,decoys])
@@ -149,7 +148,7 @@ class NumericDataModule(L.LightningDataModule):
             sequences = hits
             labels = sites['value'].values.astype(np.float32)
 
-        self.dataset = datasets.SequenceDataset(sequences, labels)
+        self.dataset = datasets.SequenceDataset(sequences, labels, one_hot=self.one_hot)
 
         if stage == 'fit':
             # Test and train data split
@@ -201,18 +200,4 @@ class GenomeDataModule(L.LightningDataModule):
             )
 
     def predict_dataloader(self):
-        def collate_fn(batch):
-            one_hot, labels = zip(*batch)
-            return torch.stack(one_hot), torch.tensor(labels)
-
-        def worker_init_fn(worker_id):
-            torch.utils.data.get_worker_info().dataset.load_fasta()
-
-        return torch.utils.data.DataLoader(
-            self.pred_dataset, 
-            num_workers=self.num_workers, 
-            pin_memory=True,
-            collate_fn=collate_fn,
-            worker_init_fn=worker_init_fn,
-            batch_size=self.batch_size
-        )
+        return torch.utils.data.DataLoader(self.pred_dataset, num_workers=self.num_workers, pin_memory=True, batch_size=self.batch_size)

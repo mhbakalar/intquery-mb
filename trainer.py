@@ -71,7 +71,7 @@ class BedWriter(BasePredictionWriter):
 
 
 def cli_main():
-    cli = LightningCLI(modules.Regression)
+    cli = LightningCLI()
     # note: don't call fit!!
 
 

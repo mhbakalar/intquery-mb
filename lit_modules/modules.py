@@ -138,3 +138,52 @@ class Regression(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
         return optimizer
+    
+class RegressionModule(pl.LightningModule):
+    def __init__(self, basemodel, lr=1e-3):
+        super().__init__()
+        self.save_hyperparameters()
+        self.model = basemodel
+        self.lr = lr
+        self.loss_fn = torch.nn.MSELoss()
+
+    def forward(self, x):
+        return self.model(x)
+    
+    def logging(self, logits, target, loss, stage):
+        # Logging to TensorBoard (if installed) by default
+        self.log(f'{stage}_loss', loss, on_epoch=True)
+
+    def training_step(self, batch, batch_idx):
+        # Model pass
+        data, target = batch
+        output = self(data)
+        loss = self.loss_fn(output.squeeze(), target.float())
+        self.logging(output, target, loss, 'train')
+        return loss
+    
+    def validation_step(self, batch, batch_idx):
+        # Model pass
+        data, target = batch
+        output = self(data)
+        loss = self.loss_fn(output.squeeze(), target.float())
+        self.logging(output, target, loss, 'val')
+        return loss
+    
+    def test_step(self, batch, batch_idx):
+        # Model pass
+        data, target = batch
+        output = self(data)
+        loss = self.loss_fn(output.squeeze(), target.float())
+        self.logging(output, target, loss, 'test')
+        return loss
+    
+    def predict_step(self, batch, batch_idx):
+        # Model pass
+        data, ind = batch
+        output = self(data)
+        return output, ind
+
+    def configure_optimizers(self):
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
+        return optimizer

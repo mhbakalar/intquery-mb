@@ -10,9 +10,10 @@ from torch.utils.data.distributed import DistributedSampler
 import utils.fasta_data
 
 class SequenceDataset(Dataset):
-  def __init__(self, sequences, labels):
+  def __init__(self, sequences, labels, one_hot=True):
     self.sequences = sequences
     self.labels = labels
+    self.one_hot = one_hot
 
   def __len__(self):
     return len(self.sequences)
@@ -20,8 +21,15 @@ class SequenceDataset(Dataset):
   def __getitem__(self, idx):
     seq = self.sequences[idx]
     label = self.labels[idx]
-    one_hot = utils.fasta_data.str_to_one_hot(seq)
-    return one_hot, label
+
+    # Transform to one hot representation if needed
+    if self.one_hot:
+      seq = utils.fasta_data.str_to_one_hot(seq)
+    else:
+       seq = utils.fasta_data.str_to_seq_indices(seq)
+       
+    return seq, label
+
 
 '''
 Return genomic intervals using fasta reference and bed file coordinates. Requires polar.
