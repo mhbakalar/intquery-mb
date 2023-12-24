@@ -142,7 +142,7 @@ class Regression(pl.LightningModule):
 class RegressionModule(pl.LightningModule):
     def __init__(self, basemodel, lr=1e-3):
         super().__init__()
-        self.save_hyperparameters()
+        #self.save_hyperparameters()
         self.model = basemodel
         self.lr = lr
         self.loss_fn = torch.nn.MSELoss()

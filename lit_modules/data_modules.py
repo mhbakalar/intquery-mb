@@ -104,7 +104,8 @@ class NumericDataModule(L.LightningDataModule):
         train_test_split=0.8, 
         batch_size=32,
         log_transform=False,
-        one_hot=True
+        one_hot=True,
+        normalize=False
     ):
         super().__init__()
 
@@ -117,6 +118,7 @@ class NumericDataModule(L.LightningDataModule):
         self.batch_size = batch_size
         self.log_transform = log_transform
         self.one_hot = one_hot
+        self.normalize = normalize
 
     def setup(self, stage: str):
         # Select test/train dataset
@@ -137,6 +139,11 @@ class NumericDataModule(L.LightningDataModule):
         # Cryptic sites data for training
         if self.log_transform:
             sites['value'] = np.log(sites['value'])
+
+        # Normalize the data using min-max technique
+        if self.normalize:
+            data = sites['value']
+            sites['value'] = ((data - data.min()) / (data.max() - data.min())) - 1
         
         if self.decoy_mul > 0:
             sequences = np.hstack([hits,decoys])

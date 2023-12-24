@@ -2,6 +2,7 @@ import torch.nn as nn
 import torch.utils.data
 import torch
 import torch.nn.functional as F
+import lightning as L
 import math
 
 '''
@@ -37,47 +38,6 @@ class MLPModel(nn.Module):
   def forward(self, x):
     x = x.view(x.size(0), -1)
     return self.layers(x)
-class TransformerModel(nn.Module):
-    
-    def __init__(self, seq_length, ntoken, d_model, nhead, nhid, nlayers, dropout=0.5):
-        super().__init__()
-        try:
-          self.d_model = d_model
-          self.model_type = 'Transformer'
-          self.pos_encoder = PositionalEncoding(d_model, max_len=seq_length)
-          encoder_layers = nn.TransformerEncoderLayer(
-              d_model=d_model, 
-              nhead=nhead, 
-              dim_feedforward=nhid, 
-              dropout=dropout, 
-              batch_first=True,
-          )
-          self.transformer_encoder = nn.TransformerEncoder(encoder_layers, nlayers)
-          self.encoder = nn.Embedding(ntoken, d_model)
-          self.decoder = SequencePooler(d_model)
-          self.init_weights()
-        except Exception as e:
-          print("Exception building transformer:")
-          print(e)
-    
-
-    def generate_square_subsequent_mask(self, sz):
-        mask = torch.triu(torch.ones(sz, sz) * float('-inf'), diagonal=1)
-        return mask
-
-    def init_weights(self):
-        initrange = 0.1
-        self.encoder.weight.data.uniform_(-initrange, initrange)
-        self.decoder.bias.data.zero_()
-        self.decoder.weight.data.uniform_(-initrange, initrange)
-
-    def forward(self, src):
-        src = self.encoder(src) * math.sqrt(self.d_model)
-        src = self.pos_encoder(src)
-        output = self.transformer_encoder(src)
-        output = self.decoder(output)
-        output = torch.mean(output, dim=1)
-        return output
 
 class PositionalEncoding(nn.Module):
     def __init__(self, embedding_dim, dropout=0.0, max_len=5000):
@@ -85,10 +45,9 @@ class PositionalEncoding(nn.Module):
       self.dropout = nn.Dropout(p=dropout)
       position = torch.arange(max_len).unsqueeze(1)
       div_term = torch.exp(torch.arange(0, embedding_dim, 2) * (-math.log(10000.0) / embedding_dim))
-      pe = torch.zeros(max_len, embedding_dim)
-      pe[:, 0::2] = torch.sin(position * div_term)
-      pe[:, 1::2] = torch.cos(position * div_term)
-      pe = pe.unsqueeze(0)
+      pe = torch.zeros(1, max_len, embedding_dim)
+      pe[0, :, 0::2] = torch.sin(position * div_term)
+      pe[0, :, 1::2] = torch.cos(position * div_term)
       self.register_buffer('pe', pe)
 
     def forward(self, x):
@@ -107,11 +66,48 @@ class SequencePooler(nn.Module):
             super().__init__()
             self.embedding_dim = d_model
             self.attention_pool = nn.Linear(self.embedding_dim, 1)
-            self.projection = nn.Linear(self.embedding_dim, 1)
                 
         def forward(self, x):
             x = torch.matmul(F.softmax(self.attention_pool(x), dim=1).transpose(-1, -2), x).squeeze(-2)
-            x = self.projection(x)
             return x
 
+class TransformerModel(nn.Module):
+    
+    def __init__(self, seq_length, ntoken, d_model, nhead, nhid, nlayers, head_hidden, dropout=0.5):
+        super().__init__()
+        self.d_model = d_model
+        self.model_type = 'Transformer'
+
+        self.embedding = nn.Embedding(ntoken, d_model)
+        self.pos_encoder = PositionalEncoding(d_model, max_len=seq_length)
+        encoder_layers = nn.TransformerEncoderLayer(
+            d_model=d_model, 
+            nhead=nhead, 
+            batch_first=True,
+        )
+        self.transformer_encoder = nn.TransformerEncoder(encoder_layers, nlayers)
+        self.pooler = SequencePooler(d_model)
+        
+        # Regression head
+        self.head = nn.Sequential(
+            nn.Linear(d_model, 1)
+        )
+
+    ''' Used for generative model'''
+    def generate_square_subsequent_mask(self, sz):
+        mask = torch.triu(torch.ones(sz, sz) * float('-inf'), diagonal=1)
+        return mask
+
+    def forward(self, src):
+        # Assuming src shape is [batch_size, seq_length, features]
+        x = self.embedding(src) # Note: scaling with * math.sqrt(self.d_model) breaks model.
+        x = self.pos_encoder(x)
+        x = self.transformer_encoder(x)
+        x = self.pooler(x)
+        
+        # Prediction head
+        x = x.view(x.size(0), -1)
+        output = self.head(x)
+
+        return output
 

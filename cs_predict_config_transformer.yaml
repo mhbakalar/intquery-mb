@@ -1,6 +1,11 @@
 # lightning.pytorch==2.1.0
 trainer:
-  max_epochs: 40
+  callbacks:
+    class_path: BedWriter
+    init_args:
+      output_dir: output
+      write_threshold: -100.0
+      write_interval: epoch
 model:
   class_path: lit_modules.modules.RegressionModule
   init_args:
@@ -9,21 +14,23 @@ model:
       init_args:
         seq_length: 46
         ntoken: 5
-        d_model: 32
-        nhead: 4
-        nlayers: 1
-        dropout: 0.0
+        d_model: 512
+        nhead: 16
+        nlayers: 4
+        nhid: 256
+        dropout: 0.5
+        head_hidden: 1024
     lr: 0.0005
 data:
   class_path: lit_modules.data_modules.NumericDataModule
   init_args:
-    data_path: data/TB000208a
+    data_path: data/Validated_CS
     decoy_path: data/decoys_500K
     genomic_reference_file: ../data/reference/hg38.fa
     decoy_mul: 0
     sequence_length: 46
     train_test_split: 0.8
-    batch_size: 64
-    log_transform: log
+    batch_size: 128
+    log_transform: False
     one_hot: False
     normalize: False
